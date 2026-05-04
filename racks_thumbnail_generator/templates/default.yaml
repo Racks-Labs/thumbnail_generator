@@ -14,10 +14,16 @@ scene:
   guidance: >
     Create a cinematic photorealistic image based on the scene description.
     The scene must FILL THE ENTIRE FRAME edge-to-edge — no borders, no panels, no flat color blocks.
-    The lower third should naturally have darker zones, shadows, or out-of-focus negative space (a desk surface, dark floor, shadow area) — but it must still be the same continuous scene.
+
+    COMPOSITION FOR INSTAGRAM REEL COVER:
+    - Place the MAIN subject (person, brand mark, or hero object) in the UPPER-MIDDLE region of the frame, roughly between 20% and 60% from the top. Centered horizontally is fine.
+    - Leave the bottom 25-30% of the frame as quieter negative space — darker zones, shadows, dark floor, dark wood surface, out-of-focus area, or smooth backdrop. This is where text will be overlaid in post-production.
+    - The bottom region must still be visually continuous with the rest of the scene (same lighting, same surface) — NOT a separate panel or solid color block.
+    - Avoid placing important details, faces, or product features in the bottom 30% — they will be covered by text and partially hidden by Instagram's UI.
 
 rules:
   - "ABSOLUTELY NO TEXT anywhere in the image — no headlines, no captions, no UI text, no signs, no logos with readable letters, no labels, no watermarks. Text will be added later in post-production."
   - "If a laptop screen is shown, the screen should display abstract UI shapes only, NOT readable text or wordmarks."
   - "Single full-bleed cinematic photograph"
   - "Premium photorealistic quality, A24 film still aesthetic, shallow depth of field"
+  - "Hero subject must sit in the upper-middle region (20-60% from top); bottom 25-30% reserved as quieter negative space for text overlay"

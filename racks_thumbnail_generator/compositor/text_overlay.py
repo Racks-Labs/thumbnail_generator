@@ -99,8 +99,13 @@ def overlay_text(
     accent_rgb = _hex_to_rgb(accent_color_hex)
 
     # ---- Layout ----
+    # Instagram Reels safe zones for 9:16 cover:
+    #   - Feed grid (4:5 crop): top/bottom 14.8% cropped
+    #   - Reel scroll view: bottom ~25-30% covered by caption/icons/profile UI
+    # Combined safe zone for headline: between ~15% and ~75% from top.
+    # Headline is bottom-anchored, so push its bottom to ~78% from top.
     side_pad = int(W * 0.05)
-    bottom_pad = int(H * 0.05)
+    bottom_safe_pad = int(H * 0.22)  # distance from image bottom to bottom of headline
     max_text_width = W - 2 * side_pad
     max_text_height = int(H * 0.30)
 
@@ -124,17 +129,27 @@ def overlay_text(
     gap = int(line_h * 0.05)
     total_h = len(lines) * line_h + (len(lines) - 1) * gap
 
-    # ---- Subtle dark gradient at bottom for legibility ----
-    grad_h = total_h + bottom_pad * 2
+    text_bottom_y = H - bottom_safe_pad
+    text_top_y = text_bottom_y - total_h
+
+    # ---- Dark gradient localized to text region for legibility ----
+    fade_top = int(H * 0.06)
+    fade_bottom = int(H * 0.04)
+    grad_top_y = max(0, text_top_y - fade_top)
+    grad_bottom_y = min(H, text_bottom_y + fade_bottom)
+    grad_h = grad_bottom_y - grad_top_y
     overlay = Image.new("RGBA", (W, grad_h), (0, 0, 0, 0))
     odraw = ImageDraw.Draw(overlay)
+    text_region_start_rel = fade_top / grad_h if grad_h else 0
     for i in range(grad_h):
-        alpha = int(180 * (i / grad_h) ** 1.5)
+        rel = i / grad_h
+        # Ramp 0 → 200 alpha across the fade-in zone, then hold at 200
+        alpha = int(200 * min(rel / max(text_region_start_rel, 0.01), 1.0))
         odraw.rectangle([(0, i), (W, i + 1)], fill=(0, 0, 0, alpha))
-    img.paste(overlay, (0, H - grad_h), overlay)
+    img.paste(overlay, (0, grad_top_y), overlay)
 
     # ---- Render headline lines ----
-    cursor_y = H - bottom_pad - total_h
+    cursor_y = text_top_y
 
     for line_words in lines:
         line_text = " ".join(line_words)
@@ -184,13 +199,13 @@ def overlay_text(
 
         cursor_y += line_h + gap
 
-    # ---- Branding (top right) ----
-    brand_size = max(int(H * 0.018), 16)
+    # ---- Branding (top right, inside grid-crop safe zone ~16% from top) ----
+    brand_size = max(int(H * 0.022), 18)
     brand_font = ImageFont.truetype(str(fonts_dir / "Inter-Bold.ttf"), brand_size)
     bbbox = draw.textbbox((0, 0), branding, font=brand_font)
     bw = bbbox[2] - bbbox[0]
     brand_x = W - side_pad - bw
-    brand_y = int(H * 0.025)
+    brand_y = int(H * 0.17)
     draw.text(
         (brand_x, brand_y),
         branding,
