@@ -1,0 +1,48 @@
+[project]
+name = "racks-thumbnail-generator"
+version = "0.3.0"
+description = "Automatic thumbnail generator for Racks reels (video → AI scene + composited title)"
+readme = "README.md"
+requires-python = ">=3.12"
+authors = [{ name = "Racks Labs", email = "hello@rackslabs.com" }]
+license = { text = "MIT" }
+keywords = ["thumbnail", "instagram", "reel", "ai", "racks", "nanobanana", "gemini"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.12",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Topic :: Multimedia :: Graphics",
+    "Topic :: Multimedia :: Video",
+]
+dependencies = [
+    "google-genai>=1.52.0",
+    "openai>=1.0",
+    "Pillow>=10.0",
+    "ffmpeg-python>=0.2",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "pyyaml>=6.0",
+    "typer>=0.12",
+    "numpy>=1.24",
+    "rich>=13.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/Racks-Labs/thumbnail_generator"
+Repository = "https://github.com/Racks-Labs/thumbnail_generator"
+Issues = "https://github.com/Racks-Labs/thumbnail_generator/issues"
+
+[project.scripts]
+racks-thumbnail = "racks_thumbnail_generator.main:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["racks_thumbnail_generator"]
+
+[tool.hatch.build.targets.wheel.force-include]
+"racks_thumbnail_generator/assets" = "racks_thumbnail_generator/assets"
+"racks_thumbnail_generator/templates" = "racks_thumbnail_generator/templates"

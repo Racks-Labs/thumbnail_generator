@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[oc]
+build/
+dist/
+wheels/
+*.egg-info
+
+# Virtual environments
+.venv
+
+# Environment / secrets
+.env
+.env.local
+.env.*.local
+
+# Output
+output/
+
+# OS
+.DS_Store
+
+# Temp files
+*.wav
+*.tmp
+
+# Test media (don't ship test videos)
+*.mp4
+*.mov
+*.psd
+
+# IDE
+.vscode/
+.idea/

@@ -1,0 +1,23 @@
+name: "racks-default"
+
+format:
+  width: 1080
+  height: 1920
+  orientation: "vertical 9:16"
+
+style:
+  font_family: "Inter"
+  aesthetic: "editorial photography, photorealistic, cinematic, A24 film still aesthetic, premium magazine cover quality, NOT sci-fi, NOT cluttered"
+
+scene:
+  description: "{{concepto_visual}}"
+  guidance: >
+    Create a cinematic photorealistic image based on the scene description.
+    The scene must FILL THE ENTIRE FRAME edge-to-edge — no borders, no panels, no flat color blocks.
+    The lower third should naturally have darker zones, shadows, or out-of-focus negative space (a desk surface, dark floor, shadow area) — but it must still be the same continuous scene.
+
+rules:
+  - "ABSOLUTELY NO TEXT anywhere in the image — no headlines, no captions, no UI text, no signs, no logos with readable letters, no labels, no watermarks. Text will be added later in post-production."
+  - "If a laptop screen is shown, the screen should display abstract UI shapes only, NOT readable text or wordmarks."
+  - "Single full-bleed cinematic photograph"
+  - "Premium photorealistic quality, A24 film still aesthetic, shallow depth of field"
