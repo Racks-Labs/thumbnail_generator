@@ -49,10 +49,36 @@ Return a JSON object with:
 
 - tono: provocador | informativo | motivacional | educativo | controversial.
 
-- subject_focus: Decide what the SCENE is centered around. Pick ONE:
-  * "brand_product" — when the reel is ABOUT a specific named brand, product, app, model, or tool (e.g. Google, Claude, ChatGPT, Notion, MacBook, Tesla, iPhone, Sora). The scene must hero THE BRAND/PRODUCT itself.
-  * "person" — when the reel is about a human topic, mindset, advice, lifestyle, money habits, how-tos with no specific tool as the hero. The scene must hero a person doing something representative.
-  * "object" — when the reel is about a concept that's best symbolized by a single non-brand real object (a book, money, a clock). Rare — use only if neither person nor brand fits.
+- subject_focus: Decide what the SCENE is centered around. Pick ONE.
+
+  CRITICAL RULE — only use "brand_product" when the brand passes the FAMOUS TEST:
+    A general non-tech Spanish-speaking Instagram user, scrolling at high speed,
+    must INSTANTLY recognize the brand from its logo alone, without reading any
+    text. If the average person on the street wouldn't immediately know what the
+    logo represents in under 0.5 seconds, the brand FAILS the famous test.
+
+  * "brand_product" — ONLY for mass-recognizable brands that pass the famous test.
+    Examples that PASS: Google, Apple, iPhone, MacBook, ChatGPT, OpenAI, YouTube,
+    Instagram, TikTok, WhatsApp, Tesla, Spotify, Netflix, Microsoft, Windows,
+    Amazon, Meta, Facebook, X / Twitter, Uber, PayPal, Visa.
+    Examples that FAIL (use "person" instead): Claude, Anthropic, Cursor, Notion,
+    Linear, Perplexity, Sora, Suno, Runway, ElevenLabs, Caveman, n8n, Zapier,
+    Replit, v0, any new / niche / beta / startup tool, any product the average
+    person hasn't heard of in mainstream media.
+    When in doubt → DO NOT pick "brand_product". Pick "person" instead.
+    The scene heroes the brand's tangible logo / product as a 3D physical hero.
+
+  * "person" — DEFAULT for almost everything: human topics, mindset, advice,
+    lifestyle, money habits, how-tos, AND niche / new / unfamiliar tools that
+    fail the famous test. When the reel discusses a lesser-known tool, the
+    person scene should still INTEGRATE the tool — the brand's wordmark goes
+    on a laptop screen, on a t-shirt, on a mug, or on a printed sticker held
+    by the subject — but the PERSON is the hero, not the logo. This avoids
+    showing a giant unrecognizable logo to viewers who'd just see visual noise.
+
+  * "object" — RARE. Only when the reel is about a concept best symbolized by
+    a single non-brand real-world object (a vintage book, a stack of cash, a
+    brass key, a clock) and neither person nor brand fits naturally.
 
 - concepto_visual: Cinematic scene description in English for an AI image generator. The composition depends on subject_focus.
 
@@ -124,7 +150,8 @@ Return a JSON object with:
   - "...glowing AI interface" / "holographic display" (sci-fi cliché)
   - "...sits in a brightly lit modern office with several monitors and plants" (cluttered)
   - "A muscular primal caveman dominates over..." (theatrical)
-  - For Google reel: "A man in a suit holds a black folder" (lost the brand entirely — should hero the Google G logo)
+  - For a Google reel (famous brand): "A man in a suit holds a black folder" (wrong archetype — should hero the Google G logo)
+  - For a Claude / Cursor / Caveman reel (NOT famous): "A 3D Claude wordmark on a pedestal alone" (wrong archetype — viewer doesn't recognize the logo; use the person archetype with the wordmark visible on the subject's laptop screen instead)
 """
 
 
