@@ -134,6 +134,7 @@ def generate(
     console.print(f"  Headline: [bold red]{content.headline}[/bold red]")
     console.print(f"  Accent word: [bold]{content.headline_accent_word}[/bold]")
     console.print(f"  Tono: {content.tono}")
+    console.print(f"  Scene focus: [bold cyan]{content.subject_focus}[/bold cyan]")
     console.print(Panel(content.concepto_visual, title="Concepto visual"))
 
     # Step 4a: Generate background scene with Nanobanana
