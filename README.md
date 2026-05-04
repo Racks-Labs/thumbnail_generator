@@ -75,6 +75,15 @@ racks-thumbnail config unset google-api-key
 racks-thumbnail config path              # ruta del archivo
 ```
 
+### Tab completion
+
+```bash
+racks-thumbnail completion --install     # auto-añade a ~/.zshrc / ~/.bashrc
+# Abre una terminal nueva (o `source ~/.zshrc`) y ya tienes tab completion
+```
+
+Soporta `zsh`, `bash`, `fish`. Detecta tu shell por `$SHELL` automáticamente. Override con `--shell zsh`.
+
 ### Precedencia de configuración
 
 | Source | Ejemplo | Prioridad |

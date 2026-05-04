@@ -1,3 +1,4 @@
+import os
 from pathlib import Path
 from datetime import datetime
 
@@ -22,8 +23,39 @@ from racks_thumbnail_generator.generator.prompt_builder import build_prompt
 from racks_thumbnail_generator.generator.image_gen import generate_thumbnail, DEFAULT_MODEL
 from racks_thumbnail_generator.compositor.text_overlay import overlay_text
 
-app = typer.Typer(name="thumbnail", help="Automatic thumbnail generator for Racks reels", no_args_is_help=True)
-config_app = typer.Typer(name="config", help="Manage API keys and settings", no_args_is_help=True)
+APP_HELP = """\
+Generate cinematic thumbnails for Racks reels from a video file.
+
+Pipeline: video → audio → transcription → topic → AI scene (Nanobanana) → text overlay (Pillow + Inter + brand color).
+
+[bold]Quick start[/bold]
+  [cyan]racks-thumbnail config set google-api-key TU_KEY[/cyan]    First-time setup
+  [cyan]racks-thumbnail generate video.mp4[/cyan]                  Generate thumbnail (output → ./output/)
+  [cyan]racks-thumbnail generate video.mp4 --accent-color "#FF6B00"[/cyan]   Custom color
+  [cyan]racks-thumbnail test-transcribe audio.mp3[/cyan]           Test transcription only
+  [cyan]racks-thumbnail config show[/cyan]                         View saved config
+
+[bold]Tab completion[/bold]
+  [cyan]racks-thumbnail completion[/cyan]                          Show snippet for your shell
+  [cyan]racks-thumbnail completion --install[/cyan]                Auto-add to ~/.zshrc / ~/.bashrc
+
+[bold]Docs[/bold]
+  https://github.com/Racks-Labs/thumbnail_generator
+"""
+
+app = typer.Typer(
+    name="racks-thumbnail",
+    help=APP_HELP,
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+    context_settings={"help_option_names": ["-h", "--help"]},
+)
+config_app = typer.Typer(
+    name="config",
+    help="Manage API keys and settings (stored at ~/.config/racks-thumbnail/.env)",
+    no_args_is_help=True,
+    rich_markup_mode="rich",
+)
 app.add_typer(config_app, name="config")
 console = Console()
 
@@ -228,6 +260,71 @@ def config_unset(key: str = typer.Argument(..., help="Config key to remove")):
         console.print(f"[green]Removed {key}[/green]")
     else:
         console.print(f"[yellow]{key} not set[/yellow]")
+
+
+# ---- Shell completion ----
+
+PROG_NAME = "racks-thumbnail"
+COMPLETION_VAR = f"_{PROG_NAME.replace('-', '_').upper()}_COMPLETE"
+
+SHELL_RC = {
+    "zsh": "~/.zshrc",
+    "bash": "~/.bashrc",
+    "fish": "~/.config/fish/completions/racks-thumbnail.fish",
+}
+
+
+def _detect_shell() -> str | None:
+    sh = os.environ.get("SHELL", "")
+    name = Path(sh).name.lower()
+    return name if name in SHELL_RC else None
+
+
+def _get_typer_script(shell: str) -> str:
+    from typer._completion_shared import get_completion_script
+    return get_completion_script(prog_name=PROG_NAME, complete_var=COMPLETION_VAR, shell=shell)
+
+
+@app.command("completion")
+def completion(
+    shell: str = typer.Option(None, help="Shell: zsh, bash, fish (auto-detected from $SHELL)"),
+    install: bool = typer.Option(False, "--install", help="Auto-append to your shell rc file"),
+    show_script: bool = typer.Option(False, "--show-script", help="Print the full completion script"),
+):
+    """Setup tab completion for racks-thumbnail."""
+    shell = shell or _detect_shell()
+    if not shell:
+        console.print("[red]Could not detect shell from $SHELL.[/red] Pass --shell zsh|bash|fish.")
+        raise typer.Exit(1)
+    if shell not in SHELL_RC:
+        console.print(f"[red]Unsupported shell: {shell}.[/red] Use zsh, bash, or fish.")
+        raise typer.Exit(1)
+
+    script = _get_typer_script(shell)
+
+    if show_script:
+        console.print(script)
+        return
+
+    rc_path = Path(os.path.expanduser(SHELL_RC[shell]))
+
+    if install:
+        rc_path.parent.mkdir(parents=True, exist_ok=True)
+        existing = rc_path.read_text() if rc_path.exists() else ""
+        marker = f"# racks-thumbnail completion ({shell})"
+        if marker in existing or COMPLETION_VAR in existing:
+            console.print(f"[yellow]Completion already installed in {rc_path}[/yellow]")
+        else:
+            with rc_path.open("a") as f:
+                f.write(f"\n{marker}\n{script}\n")
+            console.print(f"[green]Installed completion → {rc_path}[/green]")
+        console.print(f"\nReload shell:  [cyan]source {rc_path}[/cyan]  (or open a new terminal)")
+    else:
+        console.print(f"Detected shell: [bold]{shell}[/bold]")
+        console.print(f"Will install to: [bold]{SHELL_RC[shell]}[/bold]\n")
+        console.print(f"  [cyan]racks-thumbnail completion --install[/cyan]              Auto-add to rc file")
+        console.print(f"  [cyan]racks-thumbnail completion --show-script[/cyan]          Print the script")
+        console.print(f"\nThen open a new shell to enable.")
 
 
 if __name__ == "__main__":
