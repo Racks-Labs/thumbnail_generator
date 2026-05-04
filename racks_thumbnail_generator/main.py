@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 from datetime import datetime
 
@@ -10,6 +11,7 @@ from rich.prompt import Prompt
 from racks_thumbnail_generator.config import (
     get_settings,
     TranscriberBackend,
+    global_config_dir,
     global_config_path,
     read_global_config,
     write_global_config,
@@ -36,8 +38,8 @@ Pipeline: video → audio → transcription → topic → AI scene (Nanobanana) 
   [cyan]racks-thumbnail config show[/cyan]                         View saved config
 
 [bold]Tab completion[/bold]
-  [cyan]racks-thumbnail completion[/cyan]                          Show snippet for your shell
-  [cyan]racks-thumbnail completion --install[/cyan]                Auto-add to ~/.zshrc / ~/.bashrc
+  Auto-installed on first run. Open a new shell to enable.
+  Manual: [cyan]racks-thumbnail completion --install[/cyan]   /   uninstall: [cyan]racks-thumbnail completion --uninstall[/cyan]
 
 [bold]Docs[/bold]
   https://github.com/Racks-Labs/thumbnail_generator
@@ -266,6 +268,8 @@ def config_unset(key: str = typer.Argument(..., help="Config key to remove")):
 
 PROG_NAME = "racks-thumbnail"
 COMPLETION_VAR = f"_{PROG_NAME.replace('-', '_').upper()}_COMPLETE"
+COMPLETION_MARKER_BEGIN = "# >>> racks-thumbnail completion >>>"
+COMPLETION_MARKER_END = "# <<< racks-thumbnail completion <<<"
 
 SHELL_RC = {
     "zsh": "~/.zshrc",
@@ -285,13 +289,94 @@ def _get_typer_script(shell: str) -> str:
     return get_completion_script(prog_name=PROG_NAME, complete_var=COMPLETION_VAR, shell=shell)
 
 
+def _is_persistent_install() -> bool:
+    """Auto-install completion only for permanent installs (uv tool / pip --user).
+    Skip for ephemeral envs: uvx cache, dev .venv, system temp.
+    Uses sys.prefix (venv root) — does not follow symlinks."""
+    s = sys.prefix.lower()
+    # Persistent: uv tool installs land here
+    if "/.local/share/uv/tools/" in s:
+        return True
+    if "/.local/" in s and "/site-packages" not in s:
+        # pip install --user style
+        return True
+    # Ephemeral: skip
+    return False
+
+
+def _install_completion_to_rc(shell: str) -> tuple[bool, Path]:
+    """Append completion block to rc file. Returns (newly_installed, rc_path)."""
+    rc_path = Path(os.path.expanduser(SHELL_RC[shell]))
+    rc_path.parent.mkdir(parents=True, exist_ok=True)
+    existing = rc_path.read_text() if rc_path.exists() else ""
+    if COMPLETION_MARKER_BEGIN in existing or COMPLETION_VAR in existing:
+        return False, rc_path
+    script = _get_typer_script(shell)
+    block = f"\n{COMPLETION_MARKER_BEGIN}\n{script}\n{COMPLETION_MARKER_END}\n"
+    with rc_path.open("a") as f:
+        f.write(block)
+    return True, rc_path
+
+
+def _uninstall_completion_from_rc(shell: str) -> tuple[bool, Path]:
+    """Remove completion block from rc file. Returns (was_present, rc_path)."""
+    rc_path = Path(os.path.expanduser(SHELL_RC[shell]))
+    if not rc_path.exists():
+        return False, rc_path
+    text = rc_path.read_text()
+    if COMPLETION_MARKER_BEGIN not in text:
+        return False, rc_path
+    lines = text.splitlines()
+    out, skip = [], False
+    for ln in lines:
+        if ln.strip() == COMPLETION_MARKER_BEGIN:
+            skip = True
+            continue
+        if ln.strip() == COMPLETION_MARKER_END:
+            skip = False
+            continue
+        if not skip:
+            out.append(ln)
+    rc_path.write_text("\n".join(out).rstrip() + "\n")
+    return True, rc_path
+
+
+def _maybe_auto_install_completion() -> None:
+    """First-run silent auto-install. No-op if already installed, ephemeral env, or unsupported shell."""
+    marker = global_config_dir() / ".completion-installed"
+    if marker.exists():
+        return
+    if not _is_persistent_install():
+        return
+    shell = _detect_shell()
+    if not shell:
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.touch()
+        return
+    try:
+        installed, rc_path = _install_completion_to_rc(shell)
+        if installed:
+            console.print(f"[dim]✓ Tab completion installed → {rc_path}. Open a new shell to use.[/dim]")
+    except Exception:
+        pass
+    marker.parent.mkdir(parents=True, exist_ok=True)
+    marker.touch()
+
+
+@app.callback()
+def _root_callback():
+    """Runs before any subcommand — triggers first-run auto-install."""
+    _maybe_auto_install_completion()
+
+
 @app.command("completion")
 def completion(
     shell: str = typer.Option(None, help="Shell: zsh, bash, fish (auto-detected from $SHELL)"),
-    install: bool = typer.Option(False, "--install", help="Auto-append to your shell rc file"),
-    show_script: bool = typer.Option(False, "--show-script", help="Print the full completion script"),
+    install: bool = typer.Option(False, "--install", help="Manually (re)install completion"),
+    uninstall: bool = typer.Option(False, "--uninstall", help="Remove completion from your rc file"),
+    show_script: bool = typer.Option(False, "--show-script", help="Print the completion script"),
 ):
-    """Setup tab completion for racks-thumbnail."""
+    """Manage tab completion (auto-installed on first run)."""
     shell = shell or _detect_shell()
     if not shell:
         console.print("[red]Could not detect shell from $SHELL.[/red] Pass --shell zsh|bash|fish.")
@@ -300,31 +385,43 @@ def completion(
         console.print(f"[red]Unsupported shell: {shell}.[/red] Use zsh, bash, or fish.")
         raise typer.Exit(1)
 
-    script = _get_typer_script(shell)
-
     if show_script:
-        console.print(script)
+        console.print(_get_typer_script(shell))
         return
 
-    rc_path = Path(os.path.expanduser(SHELL_RC[shell]))
+    if uninstall:
+        was_present, rc_path = _uninstall_completion_from_rc(shell)
+        marker = global_config_dir() / ".completion-installed"
+        if marker.exists():
+            marker.unlink()
+        if was_present:
+            console.print(f"[green]Removed completion from {rc_path}[/green]")
+        else:
+            console.print(f"[yellow]No completion block found in {rc_path}[/yellow]")
+        return
 
     if install:
-        rc_path.parent.mkdir(parents=True, exist_ok=True)
-        existing = rc_path.read_text() if rc_path.exists() else ""
-        marker = f"# racks-thumbnail completion ({shell})"
-        if marker in existing or COMPLETION_VAR in existing:
-            console.print(f"[yellow]Completion already installed in {rc_path}[/yellow]")
-        else:
-            with rc_path.open("a") as f:
-                f.write(f"\n{marker}\n{script}\n")
+        installed, rc_path = _install_completion_to_rc(shell)
+        marker = global_config_dir() / ".completion-installed"
+        marker.parent.mkdir(parents=True, exist_ok=True)
+        marker.touch()
+        if installed:
             console.print(f"[green]Installed completion → {rc_path}[/green]")
+        else:
+            console.print(f"[yellow]Already installed in {rc_path}[/yellow]")
         console.print(f"\nReload shell:  [cyan]source {rc_path}[/cyan]  (or open a new terminal)")
-    else:
-        console.print(f"Detected shell: [bold]{shell}[/bold]")
-        console.print(f"Will install to: [bold]{SHELL_RC[shell]}[/bold]\n")
-        console.print(f"  [cyan]racks-thumbnail completion --install[/cyan]              Auto-add to rc file")
-        console.print(f"  [cyan]racks-thumbnail completion --show-script[/cyan]          Print the script")
-        console.print(f"\nThen open a new shell to enable.")
+        return
+
+    # Status
+    rc_path = Path(os.path.expanduser(SHELL_RC[shell]))
+    existing = rc_path.read_text() if rc_path.exists() else ""
+    is_installed = COMPLETION_MARKER_BEGIN in existing
+    console.print(f"Shell: [bold]{shell}[/bold]")
+    console.print(f"RC file: [bold]{rc_path}[/bold]")
+    console.print(f"Status: {'[green]installed[/green]' if is_installed else '[yellow]not installed[/yellow]'}\n")
+    console.print(f"  [cyan]racks-thumbnail completion --install[/cyan]    Install / reinstall")
+    console.print(f"  [cyan]racks-thumbnail completion --uninstall[/cyan]  Remove")
+    console.print(f"  [cyan]racks-thumbnail completion --show-script[/cyan] Print raw script")
 
 
 if __name__ == "__main__":
