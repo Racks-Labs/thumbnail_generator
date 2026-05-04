@@ -209,23 +209,81 @@ def test_transcribe(
 
 # ---- Config subcommands ----
 
-@config_app.command("set")
+CONFIG_KEY_HELP = {
+    "GOOGLE_API_KEY": "Google AI Studio API key (required for Gemini transcription + image gen)",
+    "OPENAI_API_KEY": "OpenAI API key (required only for --transcriber whisper)",
+    "TRANSCRIBER":    "Default transcription backend: gemini | whisper",
+    "ACCENT_COLOR":   "Default accent color hex (e.g. #BE190F)",
+}
+
+CONFIG_KEYS_HINT = (
+    "Available keys:\n"
+    + "\n".join(f"  • {k.lower().replace('_', '-')}  —  {desc}" for k, desc in CONFIG_KEY_HELP.items())
+)
+
+
+def _complete_config_key(incomplete: str) -> list[str]:
+    """Tab completion candidates for config keys."""
+    candidates = [k.lower().replace("_", "-") for k in CONFIG_KEYS]
+    return [c for c in candidates if c.startswith(incomplete.lower())]
+
+
+def _show_keys_and_exit():
+    console.print("[yellow]Missing key argument.[/yellow]\n")
+    console.print(CONFIG_KEYS_HINT)
+    console.print(
+        f"\n[bold]Examples:[/bold]\n"
+        f"  [cyan]racks-thumbnail config set google-api-key AIza...[/cyan]\n"
+        f"  [cyan]racks-thumbnail config set accent-color \"#BE190F\"[/cyan]\n"
+        f"  [cyan]racks-thumbnail config set transcriber whisper[/cyan]"
+    )
+    raise typer.Exit(1)
+
+
+@config_app.command(
+    "set",
+    help=(
+        "Set a config value (saved to ~/.config/racks-thumbnail/.env).\n\n"
+        + CONFIG_KEYS_HINT
+    ),
+)
 def config_set(
-    key: str = typer.Argument(..., help=f"One of: {sorted(CONFIG_KEYS)}"),
-    value: str = typer.Argument(..., help="Value to store"),
+    key: str = typer.Argument(
+        None,
+        help="Config key (e.g. google-api-key)",
+        autocompletion=_complete_config_key,
+    ),
+    value: str = typer.Argument(None, help="Value to store"),
 ):
-    """Set a config value (saved to ~/.config/thumbnail-generator/.env)."""
+    if key is None:
+        _show_keys_and_exit()
+    if value is None:
+        console.print(f"[yellow]Missing value for {key}.[/yellow]")
+        console.print(f"\nUsage: [cyan]racks-thumbnail config set {key} <value>[/cyan]")
+        raise typer.Exit(1)
     try:
         path = set_global_config_value(key, value)
     except ValueError as e:
-        console.print(f"[red]{e}[/red]")
+        console.print(f"[red]{e}[/red]\n")
+        console.print(CONFIG_KEYS_HINT)
         raise typer.Exit(1)
-    console.print(f"[green]Saved {key.upper()} → {path}[/green]")
+    console.print(f"[green]Saved {key.upper().replace('-', '_')} → {path}[/green]")
 
 
-@config_app.command("get")
-def config_get(key: str = typer.Argument(..., help="Config key to read")):
-    """Read a config value."""
+@config_app.command(
+    "get",
+    help=(
+        "Read a config value.\n\n"
+        + CONFIG_KEYS_HINT
+    ),
+)
+def config_get(
+    key: str = typer.Argument(
+        ...,
+        help="Config key to read",
+        autocompletion=_complete_config_key,
+    ),
+):
     cfg = read_global_config()
     value = cfg.get(key.upper().replace("-", "_"), "")
     console.print(_mask(value) if "KEY" in key.upper() else value or "(unset)")
@@ -251,9 +309,17 @@ def config_path():
     console.print(str(global_config_path()))
 
 
-@config_app.command("unset")
-def config_unset(key: str = typer.Argument(..., help="Config key to remove")):
-    """Remove a config value."""
+@config_app.command(
+    "unset",
+    help="Remove a config value.\n\n" + CONFIG_KEYS_HINT,
+)
+def config_unset(
+    key: str = typer.Argument(
+        ...,
+        help="Config key to remove",
+        autocompletion=_complete_config_key,
+    ),
+):
     cfg = read_global_config()
     key = key.upper().replace("-", "_")
     if key in cfg:
