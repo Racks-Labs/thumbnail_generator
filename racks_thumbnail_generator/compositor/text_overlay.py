@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
 
 def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
@@ -54,6 +54,9 @@ def _wrap_words(words: list[str], font: ImageFont.FreeTypeFont, max_width: int, 
     return lines
 
 
+LINE_GAP_RATIO = 0.02  # tighter line spacing
+
+
 def _fit_font(
     text: str,
     font_path: Path,
@@ -69,7 +72,7 @@ def _fit_font(
         font = ImageFont.truetype(str(font_path), size)
         lines = _wrap_words(words, font, max_width, draw)
         line_h = font.getbbox("Ay")[3]
-        gap = int(line_h * 0.05)
+        gap = int(line_h * LINE_GAP_RATIO)
         total_h = len(lines) * line_h + (len(lines) - 1) * gap
         widths_ok = all(
             (draw.textbbox((0, 0), " ".join(l), font=font)[2]) <= max_width
@@ -103,18 +106,19 @@ def overlay_text(
     #   - Feed grid (4:5 crop): top/bottom 14.8% cropped
     #   - Reel scroll view: bottom ~25-30% covered by caption/icons/profile UI
     # Combined safe zone for headline: between ~15% and ~75% from top.
-    # Headline is bottom-anchored, so push its bottom to ~78% from top.
     side_pad = int(W * 0.05)
     bottom_safe_pad = int(H * 0.22)  # distance from image bottom to bottom of headline
     max_text_width = W - 2 * side_pad
-    max_text_height = int(H * 0.30)
+    # Reduced from 30% → 22% to match the safe zone available for the headline
+    max_text_height = int(H * 0.22)
 
     headline_upper = headline.upper()
     accent_upper = accent_word.upper()
 
     # ---- Fit headline font ----
-    start_size = max(int(H * 0.08), 60)
-    min_size = max(int(H * 0.03), 24)
+    # Reduced from 8% → 6.5% so text doesn't dominate within the safe zone
+    start_size = max(int(H * 0.065), 50)
+    min_size = max(int(H * 0.028), 22)
 
     font, lines, line_h = _fit_font(
         text=headline_upper,
@@ -126,72 +130,43 @@ def overlay_text(
         draw=draw,
     )
 
-    gap = int(line_h * 0.05)
+    gap = int(line_h * LINE_GAP_RATIO)
     total_h = len(lines) * line_h + (len(lines) - 1) * gap
 
     text_bottom_y = H - bottom_safe_pad
     text_top_y = text_bottom_y - total_h
 
-    # ---- Dark gradient localized to text region for legibility ----
-    fade_top = int(H * 0.06)
-    fade_bottom = int(H * 0.04)
-    grad_top_y = max(0, text_top_y - fade_top)
-    grad_bottom_y = min(H, text_bottom_y + fade_bottom)
-    grad_h = grad_bottom_y - grad_top_y
-    overlay = Image.new("RGBA", (W, grad_h), (0, 0, 0, 0))
-    odraw = ImageDraw.Draw(overlay)
-    text_region_start_rel = fade_top / grad_h if grad_h else 0
-    for i in range(grad_h):
-        rel = i / grad_h
-        # Ramp 0 → 200 alpha across the fade-in zone, then hold at 200
-        alpha = int(200 * min(rel / max(text_region_start_rel, 0.01), 1.0))
-        odraw.rectangle([(0, i), (W, i + 1)], fill=(0, 0, 0, alpha))
-    img.paste(overlay, (0, grad_top_y), overlay)
-
-    # ---- Render headline lines ----
+    # ---- Pre-compute element positions ----
+    # Each entry: dict with type ('block' | 'text'), bbox/pos, color, etc.
+    elements: list[dict] = []
     cursor_y = text_top_y
+    space_w = draw.textbbox((0, 0), " ", font=font)[2]
+    accent_text_color = _readable_text_color(accent_rgb)
 
     for line_words in lines:
-        line_text = " ".join(line_words)
-        bbox = draw.textbbox((0, 0), line_text, font=font)
-        line_w = bbox[2] - bbox[0]
-        x = side_pad
+        bbox = draw.textbbox((0, 0), " ".join(line_words), font=font)
         ascent_offset = bbox[1]
-
-        # Render word by word to inject accent block
-        cursor_x = x
-        space_w = draw.textbbox((0, 0), " ", font=font)[2]
+        cursor_x = side_pad
 
         for i, word in enumerate(line_words):
             wbbox = draw.textbbox((0, 0), word, font=font)
             ww = wbbox[2] - wbbox[0]
             wh = wbbox[3] - wbbox[1]
-
             is_accent = word == accent_upper
 
             if is_accent:
                 pad_x = int(font.size * 0.12)
                 pad_y = int(font.size * 0.08)
-                rect_x0 = cursor_x - pad_x
-                rect_y0 = cursor_y + ascent_offset - pad_y
-                rect_x1 = cursor_x + ww + pad_x
-                rect_y1 = cursor_y + ascent_offset + wh + pad_y
-                draw.rectangle(
-                    [(rect_x0, rect_y0), (rect_x1, rect_y1)],
-                    fill=accent_rgb + (255,),
+                rect = (
+                    cursor_x - pad_x,
+                    cursor_y + ascent_offset - pad_y,
+                    cursor_x + ww + pad_x,
+                    cursor_y + ascent_offset + wh + pad_y,
                 )
-                # Auto-pick black or white text based on contrast vs accent block
-                text_rgb = _readable_text_color(accent_rgb)
-                fill = text_rgb + (255,)
+                elements.append({"kind": "block", "rect": rect, "color": accent_rgb})
+                elements.append({"kind": "text", "pos": (cursor_x, cursor_y), "word": word, "color": accent_text_color, "shadowed": False})
             else:
-                fill = (255, 255, 255, 255)
-
-            draw.text(
-                (cursor_x, cursor_y),
-                word,
-                font=font,
-                fill=fill,
-            )
+                elements.append({"kind": "text", "pos": (cursor_x, cursor_y), "word": word, "color": (255, 255, 255), "shadowed": True})
 
             cursor_x += ww
             if i < len(line_words) - 1:
@@ -199,18 +174,59 @@ def overlay_text(
 
         cursor_y += line_h + gap
 
-    # ---- Branding (top right, inside grid-crop safe zone ~16% from top) ----
+    # ---- Branding position ----
     brand_size = max(int(H * 0.022), 18)
     brand_font = ImageFont.truetype(str(fonts_dir / "Inter-Bold.ttf"), brand_size)
     bbbox = draw.textbbox((0, 0), branding, font=brand_font)
     bw = bbbox[2] - bbbox[0]
-    brand_x = W - side_pad - bw
-    brand_y = int(H * 0.17)
-    draw.text(
-        (brand_x, brand_y),
+    brand_pos = (W - side_pad - bw, int(H * 0.17))
+
+    # ---- Pass 1: blurred drop shadow layer ----
+    # Soft shadow for ALL headline elements (white text + accent block + branding).
+    # Goal: legibility on bright scene zones without looking like a hard outline.
+    shadow_offset_x = max(2, int(font.size * 0.025))
+    shadow_offset_y = max(3, int(font.size * 0.04))
+    blur_radius = max(4, int(font.size * 0.06))
+    shadow_alpha = 160
+
+    shadow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+    sdraw = ImageDraw.Draw(shadow_layer)
+
+    for el in elements:
+        if el["kind"] == "block":
+            x0, y0, x1, y1 = el["rect"]
+            sdraw.rectangle(
+                [(x0 + shadow_offset_x, y0 + shadow_offset_y),
+                 (x1 + shadow_offset_x, y1 + shadow_offset_y)],
+                fill=(0, 0, 0, shadow_alpha),
+            )
+        elif el["kind"] == "text" and el["shadowed"]:
+            sdraw.text(
+                (el["pos"][0] + shadow_offset_x, el["pos"][1] + shadow_offset_y),
+                el["word"],
+                font=font,
+                fill=(0, 0, 0, shadow_alpha),
+            )
+
+    # Branding shadow
+    sdraw.text(
+        (brand_pos[0] + max(1, shadow_offset_x // 2), brand_pos[1] + max(2, shadow_offset_y // 2)),
         branding,
         font=brand_font,
-        fill=(255, 255, 255, 255),
+        fill=(0, 0, 0, shadow_alpha),
     )
+
+    shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+    img.paste(shadow_layer, (0, 0), shadow_layer)
+
+    # ---- Pass 2: content (blocks + text on top of shadow) ----
+    for el in elements:
+        if el["kind"] == "block":
+            x0, y0, x1, y1 = el["rect"]
+            draw.rectangle([(x0, y0), (x1, y1)], fill=el["color"] + (255,))
+        else:
+            draw.text(el["pos"], el["word"], font=font, fill=el["color"] + (255,))
+
+    draw.text(brand_pos, branding, font=brand_font, fill=(255, 255, 255, 255))
 
     return img
