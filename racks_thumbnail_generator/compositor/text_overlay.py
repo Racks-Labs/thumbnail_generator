@@ -8,6 +8,31 @@ def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
     return tuple(int(h[i:i+2], 16) for i in (0, 2, 4))
 
 
+def _relative_luminance(rgb: tuple[int, int, int]) -> float:
+    """WCAG relative luminance, 0..1."""
+    def chan(c: int) -> float:
+        s = c / 255
+        return s / 12.92 if s <= 0.03928 else ((s + 0.055) / 1.055) ** 2.4
+    r, g, b = rgb
+    return 0.2126 * chan(r) + 0.7152 * chan(g) + 0.0722 * chan(b)
+
+
+def _contrast_ratio(rgb1: tuple[int, int, int], rgb2: tuple[int, int, int]) -> float:
+    l1 = _relative_luminance(rgb1)
+    l2 = _relative_luminance(rgb2)
+    hi, lo = max(l1, l2), min(l1, l2)
+    return (hi + 0.05) / (lo + 0.05)
+
+
+def _readable_text_color(bg_rgb: tuple[int, int, int]) -> tuple[int, int, int]:
+    """Return black or white — whichever has better contrast against bg.
+    WCAG AA needs >= 4.5 for normal text. For large bold display text the
+    threshold is more permissive (3.0) but we err on side of legibility."""
+    white = (255, 255, 255)
+    black = (0, 0, 0)
+    return white if _contrast_ratio(white, bg_rgb) >= _contrast_ratio(black, bg_rgb) else black
+
+
 def _wrap_words(words: list[str], font: ImageFont.FreeTypeFont, max_width: int, draw: ImageDraw.ImageDraw) -> list[list[str]]:
     """Greedy word-wrap into lines that fit max_width."""
     lines: list[list[str]] = []
@@ -140,12 +165,17 @@ def overlay_text(
                     [(rect_x0, rect_y0), (rect_x1, rect_y1)],
                     fill=accent_rgb + (255,),
                 )
+                # Auto-pick black or white text based on contrast vs accent block
+                text_rgb = _readable_text_color(accent_rgb)
+                fill = text_rgb + (255,)
+            else:
+                fill = (255, 255, 255, 255)
 
             draw.text(
                 (cursor_x, cursor_y),
                 word,
                 font=font,
-                fill=(255, 255, 255, 255),
+                fill=fill,
             )
 
             cursor_x += ww
