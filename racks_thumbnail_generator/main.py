@@ -93,6 +93,7 @@ def generate(
     accent_color: str = typer.Option(None, help="Accent color hex (default: #BE190F)"),
     transcriber: str = typer.Option(None, help="Transcription backend: gemini or whisper"),
     model: str = typer.Option(DEFAULT_MODEL, help="Gemini image model"),
+    show_prompt: bool = typer.Option(False, "--show-prompt", help="Print the final Nano Banana prompt and exit (no image generated)"),
 ):
     settings = get_settings()
     _ensure_api_key(settings)
@@ -138,8 +139,15 @@ def generate(
     console.print(Panel(content.concepto_visual, title="Concepto visual"))
 
     # Step 4a: Generate background scene with Nanobanana
-    console.print("[bold]4/4[/bold] Generating background scene with Nanobanana...")
     prompt = build_prompt(template_path, content, settings.accent_color)
+
+    if show_prompt:
+        console.print(Panel(prompt, title="Final Nano Banana prompt", border_style="cyan"))
+        console.print("[yellow]--show-prompt: skipping image generation.[/yellow]")
+        audio_path.unlink(missing_ok=True)
+        return
+
+    console.print("[bold]4/4[/bold] Generating background scene with Nanobanana...")
 
     references = []
     user_refs = Path.cwd() / "references"
