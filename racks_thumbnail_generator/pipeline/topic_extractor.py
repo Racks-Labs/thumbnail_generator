@@ -5,7 +5,7 @@ from google import genai
 from google.genai import types as genai_types
 
 
-SubjectFocus = Literal["brand_product", "person", "object"]
+SubjectFocus = Literal["brand_product", "theme_artifact", "person", "object"]
 
 
 class ThumbnailContent(BaseModel):
@@ -51,34 +51,88 @@ Return a JSON object with:
 
 - subject_focus: Decide what the SCENE is centered around. Pick ONE.
 
-  CRITICAL RULE — only use "brand_product" when the brand passes the FAMOUS TEST:
-    A general non-tech Spanish-speaking Instagram user, scrolling at high speed,
-    must INSTANTLY recognize the brand from its logo alone, without reading any
-    text. If the average person on the street wouldn't immediately know what the
-    logo represents in under 0.5 seconds, the brand FAILS the famous test.
+  =====================================================================
+  DECISION TREE — apply IN THIS ORDER, stop at first match:
+  =====================================================================
 
-  * "brand_product" — ONLY for mass-recognizable brands that pass the famous test.
-    Examples that PASS: Google, Apple, iPhone, MacBook, ChatGPT, OpenAI, YouTube,
-    Instagram, TikTok, WhatsApp, Tesla, Spotify, Netflix, Microsoft, Windows,
-    Amazon, Meta, Facebook, X / Twitter, Uber, PayPal, Visa.
-    Examples that FAIL (use "person" instead): Claude, Anthropic, Cursor, Notion,
-    Linear, Perplexity, Sora, Suno, Runway, ElevenLabs, Caveman, n8n, Zapier,
-    Replit, v0, any new / niche / beta / startup tool, any product the average
-    person hasn't heard of in mainstream media.
-    When in doubt → DO NOT pick "brand_product". Pick "person" instead.
-    The scene heroes the brand's tangible logo / product as a 3D physical hero.
+  STEP 1 — Famous brand test.
+    Does the reel center on a brand the average non-tech Spanish Instagram
+    user instantly recognizes from its logo alone (no text), in <0.5s?
+    Examples that PASS: Google, Apple, iPhone, MacBook, ChatGPT, OpenAI,
+    YouTube, Instagram, TikTok, WhatsApp, Tesla, Spotify, Netflix,
+    Microsoft, Windows, Amazon, Meta, Facebook, X / Twitter, Uber, PayPal, Visa.
+    → If YES → "brand_product".
+    → If NO (Claude, Cursor, Notion, Linear, Sora, Suno, Runway, n8n,
+      Zapier, Replit, v0, any niche/new/beta tool) → continue to STEP 2.
 
-  * "person" — DEFAULT for almost everything: human topics, mindset, advice,
-    lifestyle, money habits, how-tos, AND niche / new / unfamiliar tools that
-    fail the famous test. When the reel discusses a lesser-known tool, the
-    person scene should still INTEGRATE the tool — the brand's wordmark goes
-    on a laptop screen, on a t-shirt, on a mug, or on a printed sticker held
-    by the subject — but the PERSON is the hero, not the logo. This avoids
-    showing a giant unrecognizable logo to viewers who'd just see visual noise.
+  STEP 2 — Theme artifact test.
+    Does the reel's TOPIC have iconic visual artifacts that VISUALLY
+    represent the topic better than any human face or single still-life
+    object would? An "artifact" = the tangible OUTPUT or TOOL of the topic
+    itself, instantly readable as the subject matter.
 
-  * "object" — RARE. Only when the reel is about a concept best symbolized by
-    a single non-brand real-world object (a vintage book, a stack of cash, a
-    brass key, a clock) and neither person nor brand fits naturally.
+    Examples by topic → artifact:
+      - UI / UX design / interfaces      → mockup screens, wireframes,
+                                            Figma-style layouts, app screens
+      - Code / programming / dev tools   → code editor close-up with
+                                            colored syntax (no readable text),
+                                            terminal close-up with ASCII shapes
+      - Music / audio / production       → studio monitors, mixing console,
+                                            synthesizer keys, audio waveform
+                                            on a real screen, analog tape reel
+      - Finance / stocks / trading       → printed candlestick chart on
+                                            paper, ledger pages with
+                                            handwritten figures, stock
+                                            tickers on a vintage screen
+      - Cooking / food / recipes         → plated dish overhead, raw
+                                            ingredients arranged, knife on
+                                            cutting board
+      - Fashion / style                  → garment hanging, shoe close-up,
+                                            fabric folds, accessory on stand
+      - Architecture / interior design   → architectural blueprints, scale
+                                            model, miniature room set
+      - Photography / video editing      → camera body close-up, film strips,
+                                            color grading swatches
+      - Writing / content                → typewriter, manuscript with red
+                                            edits, opened journal
+      - Fitness / workout                → kettlebell, gym bench, jump rope
+      - Beauty / skincare                → product bottles, brushes, palette
+      - Crypto / blockchain              → physical metal coin (Bitcoin),
+                                            paper wallet print
+      - 3D / motion / VFX                → 3D render of a wireframe object,
+                                            grease-pencil storyboard frames
+      - Productivity / planning          → analog planner, pen, sticky notes
+      - Marketing / ads                  → printed billboard miniature,
+                                            tear-sheet magazine ad
+
+    Trigger phrase test: if the headline or transcript implies the topic
+    PRODUCES something visual ("la IA diseña interfaces" → interfaces;
+    "código limpio" → code; "edita videos así" → film/timeline), the
+    artifact wins over a person.
+    → If YES → "theme_artifact".
+    → If NO (topic is purely human: mindset, advice, money habits,
+      relationships, motivation, biographical, opinion takes) → continue
+      to STEP 3.
+
+  STEP 3 — Person test.
+    Topic is fundamentally about a HUMAN doing/feeling something (advice,
+    mindset, lifestyle, identity, story). The substance is the human angle.
+    → "person".
+    The secondary object MUST come from the substance of the reel and be
+    HIGHLY topic-specific. Forbidden default fallbacks: generic open
+    laptop, generic coffee mug, generic notebook (use these ONLY if
+    they're literally what the reel is about).
+
+  STEP 4 — Pure object fallback.
+    None of the above fit and the topic is best shown as a single iconic
+    still-life (a key for "freedom", a hourglass for "time").
+    → "object". Rare.
+
+  =====================================================================
+  When in doubt between brand_product and theme_artifact → theme_artifact.
+  When in doubt between person and theme_artifact → theme_artifact (a
+  topic-specific artifact almost always beats a generic person scene).
+  =====================================================================
 
 - concepto_visual: Cinematic scene description in English for an AI image generator. The composition depends on subject_focus.
 
@@ -115,33 +169,117 @@ Return a JSON object with:
   - APPLE: "A pristine open MacBook Pro centered on a clean dark slate desk in a darkened minimalist studio. The screen glows softly with a clean abstract gradient. Hard key light from the upper left, deep shadows on the right. No other objects. Premium commercial product photography, hyperrealistic, A24 film still."
 
   ============================================================
-  IF subject_focus == "person":
+  IF subject_focus == "theme_artifact":
   ============================================================
-  Hero a clear character + ONE real recognizable secondary object. (Current default.)
+  Hero the VISUAL OUTPUT / TOOL of the topic itself. NO person in frame.
+  The artifact must instantly communicate the subject matter — viewer
+  reads the topic from the object alone in <1s.
 
   STRUCTURE:
-  * MAIN subject: clear character with distinctive look. If the message references "caveman" / "primitive" → render an actual caveman with shaggy beard and fur tunic. Doing a modern action — the contrast is the point.
-  * SECONDARY element: ONE real instantly-readable object — fistful of dollar bills, open laptop with a visible brand wordmark on screen, coffee mug, clock, calendar, receipt, credit card, book.
-  * Setting: minimal real environment, dark studio, dark wood desk, plain wall.
-  * Lighting: single hard key from one side, deep shadows on the other.
-  * Color palette: dark/restrained base, ONE color pop from the secondary object.
+  * MAIN subject: the topic's tangible artifact, rendered as a real
+    physical / on-screen object. Pick the artifact from STEP 2's list
+    (UI mockups, code editor, mixing console, candlestick chart on
+    paper, plated dish, blueprints, camera body, etc.).
+  * Multiple instances OK: 2-4 artifacts arranged compositionally are
+    fine (e.g. 3 phone mockups stacked, several blueprint sheets fanned,
+    multiple cooking ingredients), as long as they all reinforce the
+    SAME topic. Avoid clutter from unrelated objects.
+  * Setting: dark studio, polished dark surface, plain dark backdrop.
+    Empty negative space lets the artifact dominate.
+  * Lighting: dramatic key light from one side, deep shadows. Cool
+    daylight for tech/design topics, warm tungsten for craft/lifestyle
+    topics. The artifact's natural colors are the only saturation.
+  * NO person, NO faces, NO body parts unless the artifact is literally
+    held by a single hand entering frame (e.g. a hand holding a paint
+    brush over a palette — but no full body or face).
+  * Style: premium editorial product / design photography, hyperrealistic.
 
-  Good "person" examples:
-  - WARM (intimate/human): "A scruffy caveman with shaggy hair and beard wearing a torn animal-fur tunic sits at a dark wooden desk against a near-black wall, holding a thick stack of crumpled green dollar bills in one hand. A hard warm tungsten key light from the left carves out his face and the cash; right side in deep shadow. Dark moody palette with the green of the bills as the only color pop."
-  - COOL (serious/tech): "A man in a sharp dark suit sits at a clean concrete desk in a near-black studio, sliding a single bright red passport across the table toward the camera. Cool blue daylight from upper left, hard shadows. Desaturated cool grey palette with the red passport as the only color pop."
+  Good "theme_artifact" examples:
+  - UI DESIGN: "Three pristine smartphone-sized mockup screens float
+    overlapping in a dark studio, displaying clean modern app UI layouts
+    with abstract colored shapes, cards, and buttons (no readable text,
+    just shapes). The screens have crisp white/colored interface
+    elements on dark UI. Cool daylight key from upper left, deep shadows
+    on the right, dark backdrop. Premium editorial design photography,
+    hyperrealistic, cinematic, shallow depth of field."
+  - CODE: "An ultra-close macro shot of a laptop screen filled with
+    abstract colored syntax-highlighted code blocks (no readable
+    letters — just the visual texture of indented colored shapes
+    suggesting code). Dark IDE background. Single cool key light raking
+    across the screen, deep shadows around. Minimal, premium editorial
+    tech photography, hyperrealistic."
+  - FINANCE: "A printed candlestick stock chart on cream paper lies on
+    a dark wooden desk, the chart trending upward. A vintage fountain
+    pen rests beside it. Hard warm key light from upper left, deep
+    shadow on the right side. Dark moody palette, the green/red
+    candlesticks as the only color pop. Editorial financial photography,
+    hyperrealistic."
+  - COOKING: "A perfectly plated minimalist dish — seared scallops with
+    micro herbs and a citrus reduction — centered on a matte black
+    ceramic plate against a deep black backdrop. Dramatic overhead key
+    light, deep shadows. Earthy palette with the bright citrus as the
+    only color pop. Premium food editorial photography, hyperrealistic."
+  - ARCHITECTURE: "A detailed white architectural scale model of a
+    modern house sits on a polished dark concrete surface in a darkened
+    studio. Cool daylight from the upper left, long sharp shadows on
+    the right. Minimalist, no other objects. Premium editorial
+    architecture photography, hyperrealistic."
+
+  ============================================================
+  IF subject_focus == "person":
+  ============================================================
+  Hero a clear character + ONE highly TOPIC-SPECIFIC secondary object.
+  Use ONLY when the reel is fundamentally about a human angle (mindset,
+  advice, lifestyle, identity, story).
+
+  STRUCTURE:
+  * MAIN subject: clear character with distinctive look. If the message
+    references "caveman" / "primitive" → render an actual caveman with
+    shaggy beard and fur tunic doing a modern action. The contrast IS
+    the point.
+  * SECONDARY element: ONE real, instantly-readable object that comes
+    DIRECTLY from the substance of the reel. NOT a generic default.
+    Forbidden generic fallbacks (use only if THE reel is literally about
+    them): plain open laptop with no visible content, plain coffee mug,
+    plain notebook, plain wall calendar. If you find yourself reaching
+    for one of these, STOP — reconsider whether theme_artifact is the
+    right archetype instead.
+  * Setting: minimal real environment, dark studio, dark wood desk.
+  * Lighting: single hard key from one side, deep shadows on the other.
+  * Color palette: dark/restrained base, ONE color pop from the
+    secondary object.
+
+  Good "person" examples (object always tied to substance):
+  - MONEY MINDSET: "A scruffy caveman with shaggy hair and beard
+    wearing a torn animal-fur tunic sits at a dark wooden desk against
+    a near-black wall, holding a thick stack of crumpled green dollar
+    bills in one hand. Hard warm tungsten key light from the left;
+    right side in deep shadow. Dark moody palette with the green of
+    the bills as the only color pop."
+  - TRAVEL/IDENTITY: "A man in a sharp dark suit sits at a clean
+    concrete desk in a near-black studio, sliding a single bright red
+    passport across the table toward the camera. Cool blue daylight
+    from upper left, hard shadows. Desaturated cool grey palette with
+    the red passport as the only color pop."
 
   ============================================================
   IF subject_focus == "object":
   ============================================================
-  Hero a single iconic object. No person.
+  Hero a single iconic still-life object representing an abstract
+  concept. Use only when no theme artifact, brand, or person fits.
 
   STRUCTURE:
-  * MAIN subject: ONE iconic real-world object centered in frame, presented as a still life — an open antique book, a vintage clock, a stack of cash, a brass key.
-  * Setting: dark studio, polished dark wooden surface, plain backdrop.
+  * MAIN subject: ONE iconic real-world object, still life, centered.
+  * Setting: dark studio, polished dark surface, plain backdrop.
   * Lighting: dramatic single key, deep shadows.
-  * Color palette: dark/restrained, the natural color of the object as the only pop.
+  * Color palette: dark/restrained, the object's natural color as
+    the only pop.
 
-  Good "object" example: "A single weathered brass key lies flat on a polished dark walnut surface against a near-black backdrop. A single hard warm key light from the upper left catches the worn metal, creating a long deep shadow trailing right. No other objects. Cinematic still life, hyperrealistic, A24 aesthetic."
+  Good "object" example: "A single weathered brass key lies flat on a
+  polished dark walnut surface against a near-black backdrop. Hard
+  warm key light from upper left catches the worn metal, casting a
+  long deep shadow trailing right. No other objects. Cinematic still
+  life, hyperrealistic, A24 aesthetic."
 
   ============================================================
   Bad examples (DO NOT do this regardless of focus):
@@ -150,8 +288,11 @@ Return a JSON object with:
   - "...glowing AI interface" / "holographic display" (sci-fi cliché)
   - "...sits in a brightly lit modern office with several monitors and plants" (cluttered)
   - "A muscular primal caveman dominates over..." (theatrical)
-  - For a Google reel (famous brand): "A man in a suit holds a black folder" (wrong archetype — should hero the Google G logo)
-  - For a Claude / Cursor / Caveman reel (NOT famous): "A 3D Claude wordmark on a pedestal alone" (wrong archetype — viewer doesn't recognize the logo; use the person archetype with the wordmark visible on the subject's laptop screen instead)
+  - For Google reel (famous brand): "A man in a suit holds a black folder" (wrong archetype — should hero the Google G logo)
+  - For Claude/Cursor/Caveman reel (NOT famous): "A 3D Claude wordmark on a pedestal alone" (wrong archetype — viewer doesn't recognize the logo; integrate the wordmark via person archetype OR use theme_artifact if the topic has visual outputs)
+  - For UI design reel: "A man at a laptop in a dark room" (wrong archetype — generic person scene loses the topic; should hero phone mockups / wireframes via theme_artifact)
+  - For code reel: "A developer staring at a screen" (generic — should hero the code itself via theme_artifact)
+  - For cooking reel: "A chef holding a knife" (lazy — should hero the plated dish or the ingredients via theme_artifact)
 """
 
 
