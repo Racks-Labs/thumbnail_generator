@@ -1,6 +1,54 @@
+import unicodedata
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
+
+
+def _normalize(s: str) -> str:
+    """Uppercase + strip accents + drop non-alphanumerics. For fuzzy word matching."""
+    s = s.upper()
+    s = unicodedata.normalize("NFD", s)
+    s = "".join(c for c in s if unicodedata.category(c) != "Mn")  # drop combining marks
+    return "".join(c for c in s if c.isalnum())
+
+
+def _resolve_accent_indices(headline_words: list[str], accent_word: str) -> set[int]:
+    """Return the indices of headline_words that should get the accent block.
+    Tries exact, then normalized, then substring, then 'longest word' fallback."""
+    if not accent_word.strip():
+        return set()
+
+    norm_words = [_normalize(w) for w in headline_words]
+    norm_accent = _normalize(accent_word)
+    if not norm_accent:
+        return set()
+
+    # 1) exact normalized match (handles case + punctuation + accents)
+    matches = {i for i, w in enumerate(norm_words) if w == norm_accent}
+    if matches:
+        return matches
+
+    # 2) accent_word may be multi-token ("LA MITAD") → match each subtoken
+    accent_tokens = [_normalize(t) for t in accent_word.split() if _normalize(t)]
+    if len(accent_tokens) > 1:
+        matches = {i for i, w in enumerate(norm_words) if w in accent_tokens}
+        if matches:
+            return matches
+
+    # 3) substring either way (handles morphological variation: DISEÑA vs DISEÑAR)
+    matches = {
+        i for i, w in enumerate(norm_words)
+        if w and (w in norm_accent or norm_accent in w)
+    }
+    if matches:
+        return matches
+
+    # 4) fallback: pick the single longest headline word (skip very short ones)
+    candidates = [(i, w) for i, w in enumerate(norm_words) if len(w) >= 4]
+    if candidates:
+        candidates.sort(key=lambda iw: -len(iw[1]))
+        return {candidates[0][0]}
+    return set()
 
 
 def _hex_to_rgb(hex_color: str) -> tuple[int, int, int]:
@@ -113,7 +161,6 @@ def overlay_text(
     max_text_height = int(H * 0.22)
 
     headline_upper = headline.upper()
-    accent_upper = accent_word.upper()
 
     # ---- Fit headline font ----
     # Reduced from 8% → 6.5% so text doesn't dominate within the safe zone
@@ -136,6 +183,10 @@ def overlay_text(
     text_bottom_y = H - bottom_safe_pad
     text_top_y = text_bottom_y - total_h
 
+    # Resolve accent indices over the FLAT word list of the headline (post-wrap)
+    flat_words = [w for line in lines for w in line]
+    accent_indices_flat = _resolve_accent_indices(flat_words, accent_word)
+
     # ---- Pre-compute element positions ----
     # Each entry: dict with type ('block' | 'text'), bbox/pos, color, etc.
     elements: list[dict] = []
@@ -143,16 +194,18 @@ def overlay_text(
     space_w = draw.textbbox((0, 0), " ", font=font)[2]
     accent_text_color = _readable_text_color(accent_rgb)
 
+    flat_idx = -1
     for line_words in lines:
         bbox = draw.textbbox((0, 0), " ".join(line_words), font=font)
         ascent_offset = bbox[1]
         cursor_x = side_pad
 
         for i, word in enumerate(line_words):
+            flat_idx += 1
             wbbox = draw.textbbox((0, 0), word, font=font)
             ww = wbbox[2] - wbbox[0]
             wh = wbbox[3] - wbbox[1]
-            is_accent = word == accent_upper
+            is_accent = flat_idx in accent_indices_flat
 
             if is_accent:
                 pad_x = int(font.size * 0.12)

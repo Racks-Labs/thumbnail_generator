@@ -132,8 +132,17 @@ def generate(
     # Step 3: Extract topic + visual concept
     console.print("[bold]3/4[/bold] Extracting topic + visual concept...")
     content = extract_topic(transcript, settings.google_api_key)
-    console.print(f"  Headline: [bold red]{content.headline}[/bold red]")
-    console.print(f"  Accent word: [bold]{content.headline_accent_word}[/bold]")
+    from racks_thumbnail_generator.compositor.text_overlay import _resolve_accent_indices
+    headline_words = content.headline.split()
+    matched = _resolve_accent_indices(headline_words, content.headline_accent_word)
+    matched_words = [headline_words[i] for i in sorted(matched)]
+    accent_display = (
+        f"[bold]{content.headline_accent_word}[/bold] → matched: {', '.join(matched_words)}"
+        if matched else
+        f"[bold]{content.headline_accent_word}[/bold] [yellow](no exact match — fallback used)[/yellow]"
+    )
+    console.print(f"  Headline: [bold red]{content.headline}[/bold red]  ({len(headline_words)} words, {len(content.headline)} chars)")
+    console.print(f"  Accent word: {accent_display}")
     console.print(f"  Tono: {content.tono}")
     console.print(f"  Scene focus: [bold cyan]{content.subject_focus}[/bold cyan]")
     console.print(Panel(content.concepto_visual, title="Concepto visual"))

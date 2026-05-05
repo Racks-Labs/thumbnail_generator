@@ -26,22 +26,53 @@ Transcript:
 
 Return a JSON object with:
 
-- headline: A short impactful phrase in Spanish (3-6 words MAX) that communicates the SPECIFIC VALUE the viewer gets by watching this reel.
+- headline: A short impactful phrase in Spanish that communicates the SPECIFIC VALUE the viewer gets by watching this reel.
 
-  CRITICAL — the headline must:
-  * Be CONCRETE — name the specific benefit, tool, brand, or outcome
-  * Reference WHAT the viewer learns / saves / gets — money, time, a tool name, a method
-  * NOT be a vague slogan ("Domina tu IA") — useless
-  * Sound like a Spanish-speaking creator's editorial title, not corporate
-  * NO punctuation, NO colons, NO subtitles inside
+  HARD LIMITS (the renderer will look bad if you exceed these):
+  * 3-5 words MAX. Never 6+. If the idea needs more, cut it.
+  * 30 characters MAX (counting spaces). Shorter = punchier.
+  * NO punctuation: no commas, periods, colons, semicolons, dashes,
+    quotes, parentheses, exclamation marks, question marks. Plain words
+    separated by single spaces only.
+  * NO subtitles inside (no "X: Y" structure — pick one or the other).
 
-  Good examples:
-  - "7 NUEVAS IAS DE GOOGLE"
-  - "CLAUDE RESPONDE COMO CAVERNICOLA"
-  - "AHORRA 70% EN TOKENS DE IA"
-  - "PAGA LA MITAD POR CLAUDE"
+  CONTENT RULES:
+  * Be CONCRETE — name the specific benefit, tool, brand, or outcome.
+  * Reference WHAT the viewer learns / saves / gets — money, time,
+    a tool name, a method, a number.
+  * NOT a vague slogan ("Domina tu IA", "Cambia tu vida") — useless.
+  * Sound like a Spanish-speaking creator's editorial title, not corporate.
 
-- headline_accent_word: The single most important word from the headline that gets a colored accent block behind it. Must appear EXACTLY in the headline. Pick the word that carries the value (the brand name, the number, a key noun).
+  Good examples (count: 3-5 words, ≤30 chars):
+  - "7 NUEVAS IAS DE GOOGLE"        (5 words, 21 chars)
+  - "CLAUDE COMO CAVERNICOLA"        (3 words, 23 chars)
+  - "AHORRA 70% EN TOKENS"           (4 words, 19 chars)
+  - "PAGA LA MITAD POR CLAUDE"       (5 words, 24 chars)
+  - "7 IAS QUE DISEÑAN UI"           (5 words, 20 chars)
+
+  Bad examples (TOO LONG / WRONG):
+  - "DOMINA EL DISEÑO DE INTERFACES CON IA EN MINUTOS" (10 words — too long)
+  - "AWESOME DESIGN: DISEÑA INTERFACES PERFECTAS"      (colon banned, too long)
+  - "DEJA DE PAGAR DE MAS POR CLAUDE!"                 (! banned)
+
+- headline_accent_word: ONE single word that appears LITERALLY (character-for-character)
+  in the headline. The renderer will try fuzzy matching but EXACT is best.
+
+  RULES:
+  * Pick ONE word from the headline string. Just one. Single token, no spaces.
+  * Must be a verbatim copy of the word as it appears in the headline
+    (same accents, same casing of letters — match the exact spelling).
+  * Pick the word that carries the value: the brand (CLAUDE, GOOGLE),
+    the number (7, 70%), the key verb (AHORRA, DOMINA), the key noun (UI, IAS).
+  * Avoid filler words ("DE", "LA", "POR", "CON", "EN", "QUE") unless
+    they're the ONLY meaningful tokens (rare).
+  * If the headline has no obvious standout, pick the longest word.
+
+  Examples:
+  - headline "7 NUEVAS IAS DE GOOGLE"   → accent "GOOGLE" or "7"
+  - headline "AHORRA 70% EN TOKENS"     → accent "70%" or "AHORRA"
+  - headline "CLAUDE COMO CAVERNICOLA"  → accent "CAVERNICOLA" or "CLAUDE"
+  - headline "7 IAS QUE DISEÑAN UI"     → accent "DISEÑAN" or "UI"
 
 - subtexto: Short complementary phrase in Spanish (max 8 words). Optional context.
 
@@ -296,6 +327,18 @@ Return a JSON object with:
 """
 
 
+_PUNCT_TO_STRIP = set('.,;:!?¡¿"\'()[]{}—–-')
+
+
+def _sanitize_headline(text: str) -> str:
+    """Strip banned punctuation, collapse whitespace, uppercase, cap word count."""
+    cleaned = "".join((" " if c in _PUNCT_TO_STRIP else c) for c in text)
+    words = [w for w in cleaned.split() if w]
+    if len(words) > 5:
+        words = words[:5]
+    return " ".join(words).upper()
+
+
 def extract_topic(transcript: str, api_key: str) -> ThumbnailContent:
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(
@@ -306,4 +349,8 @@ def extract_topic(transcript: str, api_key: str) -> ThumbnailContent:
             response_schema=ThumbnailContent,
         ),
     )
-    return ThumbnailContent.model_validate_json(response.text)
+    content = ThumbnailContent.model_validate_json(response.text)
+    # Hard-enforce headline limits even if LLM ignored them
+    content.headline = _sanitize_headline(content.headline)
+    content.headline_accent_word = content.headline_accent_word.strip()
+    return content
