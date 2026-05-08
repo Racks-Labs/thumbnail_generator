@@ -86,28 +86,58 @@ Return a JSON object with:
   DECISION TREE — apply IN THIS ORDER, stop at first match:
   =====================================================================
 
-  STEP 1 — Famous brand test.
-    Does the reel center on a brand the average non-tech Spanish Instagram
-    user instantly recognizes from its logo alone (no text), in <0.5s?
-    Examples that PASS:
+  STEP 1 — Recognizable brand test.
+    Does the reel center on a NAMED brand / app / tool / software /
+    company / product whose logo and brand colors are well-documented
+    and visually distinct? The brand does NOT need to be known by the
+    general public — it's enough that creators / users in that space
+    recognize it. The headline will reinforce the brand name; the logo
+    is the strong visual anchor.
+
+    Examples that PASS (use "brand_product"):
       - Tech / consumer: Google, Apple, iPhone, MacBook, iPad, AirPods,
         ChatGPT, OpenAI, YouTube, Instagram, TikTok, WhatsApp, Tesla,
         Spotify, Netflix, Microsoft, Windows, Office, Excel, Amazon, Meta,
         Facebook, X / Twitter, LinkedIn, Uber, PayPal, Visa, Mastercard,
         Disney, Disney+, HBO, Pinterest, Snapchat, Telegram, Zoom.
-      - Creative / design suites (TREATED AS FAMOUS — they have iconic
-        instantly-recognizable logos): Adobe, Photoshop, Illustrator,
+      - AI / LLM / generative: Claude, Anthropic, ChatGPT, OpenAI,
+        Gemini, Copilot, Perplexity, Midjourney, Stable Diffusion,
+        DALL-E, Sora, Suno, Runway, ElevenLabs, Pika, Luma, Kling.
+      - Creative / design / 2D suites: Adobe, Photoshop, Illustrator,
         Premiere, Premiere Pro, After Effects, Lightroom, InDesign,
-        Acrobat, Adobe Creative Cloud, Figma, Canva, Procreate, Sketch.
-      - Dev / hosting (icon-recognizable to general dev/creator audience):
-        GitHub, GitLab, Docker, Vercel, AWS, Azure, Cloudflare, Linux.
+        Acrobat, Adobe Creative Cloud, Figma, Canva, Procreate, Sketch,
+        Affinity, Notion, Framer, Webflow.
+      - 3D / VFX / CAD / engineering software: Blender, Autodesk, Maya,
+        3ds Max, AutoCAD, Fusion 360, Revit, Inventor, Cinema 4D, C4D,
+        Houdini, ZBrush, Substance Painter, Substance Designer, Marmoset,
+        SolidWorks, Rhino, Rhinoceros, Grasshopper, KeyShot, V-Ray, Arnold.
+      - Game engines: Unity, Unreal Engine, Godot, GameMaker.
+      - Video / audio editing: DaVinci Resolve, Final Cut Pro, iMovie,
+        Avid, Logic Pro, Ableton Live, FL Studio, Pro Tools, Audition,
+        CapCut, Veo, Filmora.
+      - Dev / hosting / coding tools: Cursor, Linear, Replit, Lovable,
+        v0, Bolt, GitHub, GitLab, Docker, Vercel, Netlify, AWS, Azure,
+        Google Cloud, Cloudflare, Stripe, Supabase, Firebase, Heroku,
+        Linux, Ubuntu, Postgres, MongoDB.
+      - Productivity / no-code: Slack, Zapier, n8n, Make, Airtable,
+        ClickUp, Asana, Trello, Discord, Loom, Calendly.
       - Gaming / streaming: Twitch, Steam, PlayStation, Xbox, Nintendo,
-        Roblox, Minecraft, Fortnite.
-      - Brands of physical products: Nike, Adidas, Coca-Cola, Pepsi,
+        Roblox, Minecraft, Fortnite, Valorant, League.
+      - Mass consumer brands: Nike, Adidas, Coca-Cola, Pepsi,
         McDonald's, Starbucks, BMW, Mercedes, Audi, Toyota, Ford, IKEA.
-    → If YES → "brand_product".
-    → If NO (Claude, Cursor, Notion, Linear, Sora, Suno, Runway, n8n,
-      Zapier, Replit, v0, any niche/new/beta tool) → continue to STEP 2.
+
+    Examples that FAIL (use STEP 2):
+      Brands so new / niche / unbranded that they have NO documented
+      visual identity (no logo, no brand colors), or one-off code
+      tools with literally just a CLI name. Very rare. If a quick
+      Google search would surface a brand kit / logo guidelines, the
+      brand passes.
+
+    → If brand passes → "brand_product".
+    → When in doubt → DEFAULT TO "brand_product" if any named tool or
+      service is the topic. Showing the logo is almost always more
+      readable than an abstract scene.
+    → If no named brand at all → continue to STEP 2.
 
   STEP 2 — Theme artifact test.
     Does the reel's TOPIC have iconic visual artifacts that VISUALLY
@@ -173,9 +203,14 @@ Return a JSON object with:
     → "object". Rare.
 
   =====================================================================
-  When in doubt between brand_product and theme_artifact → theme_artifact.
-  When in doubt between person and theme_artifact → theme_artifact (a
-  topic-specific artifact almost always beats a generic person scene).
+  TIE-BREAKERS:
+  - If the reel mentions ANY named brand / app / tool / software with a
+    documented logo → "brand_product" wins. Showing the official logo
+    in its real brand colors is the most readable possible thumbnail.
+  - If no named brand but a clear topic with visual artifacts (UI, code,
+    food, charts) → "theme_artifact".
+  - "person" is reserved for genuinely human topics with no brand and
+    no visual artifact. Niche default.
   =====================================================================
 
 - concepto_visual: Cinematic scene description in English for an AI image generator. The composition depends on subject_focus.
@@ -209,21 +244,40 @@ Return a JSON object with:
   Hero the BRAND or PRODUCT itself. NO person in the frame. Use creative product / hero photography.
 
   STRUCTURE:
-  * MAIN subject: the brand's recognizable mark or product, rendered in a real physical / 3D form, in FULL OFFICIAL BRAND COLORS at high saturation. NOT a flat 2D logo on a screen — physical mark sitting in the scene. NOT desaturated. The logo must be unmistakably itself. Examples:
-    - Google: a tangible 3D Google "G" letter (full color: red/yellow/green/blue) as a physical sculpture
-    - Adobe: a tangible 3D Adobe "A" stylized logo in vivid Adobe RED (#FA0F00), rendered as a glossy or matte sculpture
-    - Photoshop: a 3D rendered Photoshop "Ps" badge in vivid Photoshop blue (#001E36 with cyan accent), or a giant glossy app icon
-    - Illustrator: a 3D Illustrator "Ai" badge in vivid orange (#FF9A00)
-    - Premiere: a 3D Premiere Pro "Pr" badge in vivid violet (#9999FF)
-    - Figma: a 3D Figma logo with all four colored circles (red/orange/green/blue/purple) as physical sculpture
-    - Claude: a tangible "Claude" wordmark sculpted in matte material in warm cream and burnt orange tones (Claude's official colors)
-    - ChatGPT: the OpenAI swirl logo as a 3D rendered glossy object in teal/black
-    - Apple: a real MacBook or iPhone shown front-and-center, beautifully lit; the Apple logo in clean silver
+  * MAIN subject: the brand's recognizable mark or product, rendered in a real physical / 3D form, in FULL OFFICIAL BRAND COLORS at high saturation. NOT a flat 2D logo on a screen — physical mark sitting in the scene. NOT desaturated. The logo must be unmistakably itself. Examples (use the ACTUAL brand colors):
+    - Google: 3D Google "G" letter in vivid red/yellow/green/blue (#EA4335/#FBBC05/#34A853/#4285F4)
+    - Adobe: 3D Adobe "A" stylized logo in vivid Adobe red (#FA0F00), glossy
+    - Photoshop: 3D Photoshop "Ps" badge — glossy navy blue (#001E36) rounded square with cyan "Ps" lettering
+    - Illustrator: 3D Illustrator "Ai" badge — orange (#FF9A00) rounded square with white "Ai"
+    - Premiere Pro: 3D "Pr" badge — violet (#9999FF) with deep violet lettering
+    - After Effects: 3D "Ae" badge — purple (#9999FF / #00005B) with violet lettering
+    - Lightroom: 3D "Lr" badge — light blue (#31A8FF / #001E36) rounded square
+    - Figma: 3D Figma logo — five colored shapes (red #F24E1E, orange #FF7262, green #0ACF83, blue #1ABCFE, purple #A259FF) as physical sculpture
+    - Canva: 3D Canva "C" logo in vivid teal-to-purple gradient (#00C4CC to #7D2AE8)
+    - Blender: 3D Blender logo — the iconic stylized "blue/orange torus eye" mark (#EA7600 orange + #265787 blue), rendered as a glossy 3D physical mark
+    - Autodesk: 3D Autodesk "A" pyramid logo in vivid Autodesk black + white with pyramid geometry, OR a giant 3D Autodesk wordmark in clean white on dark
+    - Maya: 3D Autodesk Maya "M" badge — teal/green (#0696D7) glossy rounded square
+    - 3ds Max: 3D Autodesk 3ds Max "3" badge — dark blue (#0696D7) glossy
+    - AutoCAD: 3D AutoCAD red "A" badge (#E60000)
+    - Cinema 4D: 3D C4D logo in vivid blue (#011A6A) glossy
+    - Unreal Engine: 3D Unreal "U" logo in vivid black with subtle blue glow
+    - Unity: 3D Unity cube logo in white/black official 3D mark
+    - DaVinci Resolve: 3D DaVinci wordmark in vivid red/gold accents
+    - Final Cut Pro: 3D FCP slate logo in clean silver/black
+    - Claude: 3D "Claude" wordmark sculpted in matte material in warm cream (#F0EEE6) and Claude orange (#D97757) tones, premium ceramic look
+    - ChatGPT: 3D OpenAI swirl logo in glossy white on black, or in teal (#0FA37F)
+    - Gemini: 3D Gemini sparkle / star icon in vivid Google blue-purple gradient
+    - Cursor: 3D Cursor logo (the stylized C cursor mark) in clean black/white
+    - Notion: 3D Notion "N" sculpture in clean black/white
+    - Linear: 3D Linear logo in clean black gradient
+    - Apple: a real MacBook or iPhone shown front-and-center, beautifully lit; Apple logo in clean silver
     - Spotify: 3D Spotify circle logo in vivid green (#1DB954)
     - YouTube: 3D YouTube play button in vivid red (#FF0000) on white rounded rectangle
-    - Instagram: 3D Instagram camera icon with the official magenta-orange-purple gradient
-    - Notion: 3D Notion "N" sculpture in clean black/white
-    - Tesla: an actual Tesla car, or the red T logo
+    - Instagram: 3D Instagram camera icon with official magenta-orange-purple gradient
+    - Tesla: actual Tesla car, or red T logo
+    - Generic fallback for any other named brand: research the brand's
+      actual logo and primary brand colors, then describe a 3D physical
+      version of that logo in those colors. Do NOT invent fake colors.
   * SECONDARY element (optional, only if it adds to the message): a real physical container or context — a kraft cardboard box (often with a stamp like "GRATIS", "NEW", "FREE" if relevant — but the stamp text will be added separately, just describe the box as having a printable stamp area), gift wrapping, a wooden crate, a museum-style pedestal, a Polaroid-style frame.
   * Setting: dark studio backdrop OR softly out-of-focus modern office bokeh OR clean dark wooden surface. Empty negative space around the hero. The hero MUST dominate the frame.
   * Lighting: dramatic single key light highlighting the brand mark, with light leaks / colored rim light if it matches the brand colors (e.g. Google = subtle multi-color rainbow light leak in the background; Apple = clean white-on-white; Claude = warm cream/orange tones).
@@ -234,6 +288,10 @@ Return a JSON object with:
   - GOOGLE: "A tangible 3D rendered Google 'G' letter in vivid full official colors (bright red #EA4335, yellow #FBBC05, green #34A853, blue #4285F4) emerges dramatically from an open kraft cardboard box on a dark wooden table. Polystyrene packing peanuts spill around the G. Subtle multicolor rainbow light leak from the right, deep dark out-of-focus office bokeh in the background. Dramatic key light from above-right, deep shadows on the box. Premium commercial product photography, hyperrealistic."
   - ADOBE: "A tangible 3D rendered Adobe 'A' stylized logo in vivid Adobe red (#FA0F00) with glossy plastic finish, sitting on a polished dark surface in a darkened studio. Subtle red rim light from behind. Hard key light from upper left, deep dark shadow trailing right. Empty negative space around the logo. Premium commercial 3D product photography, hyperrealistic, cinematic."
   - PHOTOSHOP: "A giant 3D Photoshop 'Ps' badge — a glossy rounded square with the iconic deep navy blue background (#001E36) and the bold cyan 'Ps' lettering — sits front and center on a dark polished surface in a moody studio. Cyan rim light from behind, hard key light from above-left, deep shadows. Hyperrealistic 3D product render, cinematic."
+  - BLENDER: "A glossy 3D rendering of the iconic Blender logo — the stylized eye-shaped mark with the orange (#EA7600) outer torus and the deep blue (#265787) inner sphere — sits prominently on a polished dark surface in a darkened studio. Subtle orange rim light from behind. Hard key light from upper left, deep shadow trailing right. Empty negative space around the logo. Hyperrealistic 3D product render, cinematic, premium commercial photography."
+  - AUTODESK MAYA: "A giant 3D Autodesk Maya 'M' badge — a glossy rounded square with the iconic teal-blue (#0696D7) background and bold white 'Maya' wordmark — front and center on a dark polished surface in a moody studio. Cyan rim light from behind, hard key light from upper left, deep shadows. Hyperrealistic 3D product render, cinematic."
+  - AUTOCAD: "A 3D rendered AutoCAD 'A' logo in vivid Autodesk red (#E60000) with glossy finish, sitting on a polished dark concrete surface in a darkened architectural studio. Subtle red rim light, hard key light from upper left, deep shadows trailing right. Hyperrealistic, premium commercial 3D product photography."
+  - CLAUDE: "A 3D rendered matte ceramic 'Claude' wordmark sculpture in vivid Claude orange (#D97757) on warm cream (#F0EEE6) base, sitting on a polished dark wooden table against a near-black blurred studio background. Warm rim light from behind. Single warm tungsten key light from upper left rakes across the lettering creating soft warm shadows. Hyperrealistic, premium commercial 3D product still."
   - SPOTIFY: "A glossy 3D Spotify circle logo in vivid Spotify green (#1DB954) with the three sound waves clearly visible, floats above a dark polished surface in a moody studio. Green rim light, hard key light from upper left, deep shadows. Hyperrealistic 3D product render, cinematic."
   - APPLE: "A pristine silver MacBook Pro centered on a clean dark slate desk in a darkened minimalist studio, the glowing Apple logo on the lid clearly visible. Hard key light from upper left, deep shadows on the right. No other objects. Premium commercial product photography, hyperrealistic."
 
@@ -368,7 +426,7 @@ Return a JSON object with:
   - "...sits in a brightly lit modern office with several monitors and plants" (cluttered)
   - "A muscular primal caveman dominates over..." (theatrical)
   - For Google reel (famous brand): "A man in a suit holds a black folder" (wrong archetype — should hero the Google G logo)
-  - For Claude/Cursor/Caveman reel (NOT famous): "A 3D Claude wordmark on a pedestal alone" (wrong archetype — viewer doesn't recognize the logo; integrate the wordmark via person archetype OR use theme_artifact if the topic has visual outputs)
+  - For any reel naming a recognizable software/app/brand (Adobe, Blender, Autodesk, Maya, Claude, Cursor, Figma, etc.): falling back to person + laptop or to abstract theme_artifact is WRONG — these all have official logos and brand colors that should be heroed via brand_product. Always prefer showing the actual logo in vivid official colors over a generic person scene or abstract artifact.
   - For UI design reel: "A man at a laptop in a dark room" (wrong archetype — generic person scene loses the topic; should hero phone mockups / wireframes via theme_artifact)
   - For code reel: "A developer staring at a screen" (generic — should hero the code itself via theme_artifact)
   - For cooking reel: "A chef holding a knife" (lazy — should hero the plated dish or the ingredients via theme_artifact)
