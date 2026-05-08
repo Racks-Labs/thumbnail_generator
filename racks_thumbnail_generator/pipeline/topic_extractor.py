@@ -258,6 +258,23 @@ Return a JSON object with:
     real logo file does that for you. Reference it as "the provided
     <BRAND> logo".
 
+  * LOGO SIZE — CRITICAL. The logo (or the product carrying the logo)
+    is the HERO of the frame. It must dominate, not be a tiny detail
+    on a distant object. Required size:
+    - The logo / product MUST occupy at least 50% of the frame width
+      AND at least 40% of the frame height in the upper-middle region.
+    - If the logo sits on an object (mug, box, hoodie, billboard, etc.)
+      that object must fill most of the frame so that the printed/
+      embroidered logo on it reads instantly large. Frame the object
+      tightly — close-up macro / hero shot, not a wide context shot.
+    - Camera should be CLOSE to the hero, not far away. Background
+      bokeh stays small in the frame; the hero is BIG.
+    - Bad: "a small mug on a large desk with bookshelves and plants
+      behind it" → logo ends up tiny.
+    - Good: "a tight hero close-up of a single ceramic mug filling
+      most of the frame, the provided logo printed boldly across its
+      front, dark out-of-focus backdrop" → logo dominates.
+
   * VARIETY IS REQUIRED. Do NOT default to "3D logo on pedestal" every
     time. Pick a different real-world placement for the logo each time.
     Examples of placements (rotate between these / invent similar ones):
@@ -302,42 +319,47 @@ Return a JSON object with:
   * Color palette: dominated by the BRAND'S OWN color identity (Google = full RGB color pop; Claude = warm cream/orange; OpenAI = teal/black; Apple = silver/white). The rest of the frame stays dark/neutral.
   * Style: premium product photography, commercial advertising still, 3D render quality, hyperrealistic.
 
-  Good "brand_product" examples (each uses a different placement —
-  rotate creatively, don't repeat the same setup):
+  Good "brand_product" examples — each is a TIGHT HERO CLOSE-UP where
+  the logo or logo-bearing object dominates the frame (>50% width).
+  Rotate placements creatively, never default to one setup:
 
-  - GOOGLE (box): "The provided Google 'G' logo emerges from a kraft
-    cardboard box on a dark wooden table. Polystyrene packing peanuts
-    spill around it. Subtle multicolor rim light, dark out-of-focus
-    office bokeh, hard key from above-right, deep shadows. Premium
-    commercial product photography, hyperrealistic."
-  - ADOBE (storefront sign): "The provided Adobe logo glows softly on
-    a glass storefront window at dusk, with reflections of city lights
-    and a darkened sidewalk in front. Hard key from a streetlamp upper
-    left, deep shadows. Cinematic editorial photography, hyperrealistic."
-  - APPLE (product hero): "A pristine silver MacBook Pro centered on
-    a clean dark slate desk in a darkened minimalist studio, the
-    glowing Apple logo on the lid clearly visible. Hard key from
-    upper left, deep shadows on the right. No other objects. Premium
-    commercial product photography, hyperrealistic."
-  - SPOTIFY (mug): "The provided Spotify logo printed in vivid green
-    on a matte black ceramic coffee mug, the mug centered on a dark
-    polished wooden desk against a near-black backdrop. Wisp of steam
-    rising. Hard warm key from upper left, deep shadows. Hyperrealistic
-    editorial product photography."
-  - BLENDER (hoodie): "The provided Blender logo embroidered on the
-    chest of a folded grey heather hoodie laying on a dark walnut
-    surface. Hard key light from upper left raking across the fabric
-    weave, deep shadows on the right. Hyperrealistic editorial
-    photography, premium streetwear catalog feel."
-  - SONY (vinyl): "The provided Sony logo printed on the cover of a
-    matte black vinyl record sleeve, the sleeve standing upright in a
-    record store row, soft warm tungsten light from above, dark
-    out-of-focus shop bokeh behind. Hyperrealistic editorial."
-  - MULTI-BRAND (Adobe vs Figma): "Two glossy ceramic coffee mugs sit
-    side by side on a polished dark wooden desk. The left mug shows
-    the provided Adobe logo, the right mug shows the provided Figma
-    logo. Hard cool daylight key from upper left, deep shadows.
-    Hyperrealistic editorial product photography, comparison still."
+  - GOOGLE (box, hero close-up): "Macro hero close-up of a kraft
+    cardboard box filling most of the frame, the provided Google 'G'
+    logo printed huge on its front face. Polystyrene packing peanuts
+    spill around. Out-of-focus office bokeh far behind. Hard key from
+    above-right, deep shadows. Premium commercial product photography,
+    hyperrealistic."
+  - ADOBE (storefront, dominant): "Tight composition of a large glass
+    storefront sign filling most of the frame, the provided Adobe logo
+    glowing prominently across it. Reflections of city lights. Hard
+    streetlamp key from upper left, deep shadows. Cinematic editorial
+    photography, hyperrealistic."
+  - APPLE (laptop hero): "A pristine silver MacBook Pro framed tight
+    so it fills most of the image, the glowing Apple logo on the lid
+    centered and clearly visible. Dark slate desk, near-black studio
+    backdrop. Hard key from upper left, deep shadows on the right.
+    No other objects. Hyperrealistic commercial product photography."
+  - SPOTIFY (mug close-up): "Hero close-up of a single matte black
+    ceramic coffee mug filling 60% of the frame, the provided Spotify
+    logo printed huge in vivid green across its front. Steam rising.
+    Dark out-of-focus desk background. Hard warm key from upper left,
+    deep shadows. Hyperrealistic editorial product photography."
+  - BLENDER (hoodie, hero crop): "Tight macro of folded grey heather
+    hoodie chest area filling the frame, the provided Blender logo
+    embroidered large and centered on the fabric. Hard key from upper
+    left raking across the weave, deep shadows. Hyperrealistic
+    editorial streetwear catalog feel."
+  - SONY (vinyl hero): "Hero close-up of a matte black vinyl record
+    sleeve filling most of the frame, the provided Sony logo printed
+    bold on its cover. Soft warm tungsten light from above, dark
+    out-of-focus shop bokeh far behind. Hyperrealistic editorial."
+  - MULTI-BRAND (Adobe vs Figma): "Two glossy ceramic coffee mugs
+    framed tight side by side, each filling close to half the image.
+    The left mug has the provided Adobe logo printed huge, the right
+    mug has the provided Figma logo printed huge. Dark wooden desk,
+    near-black backdrop. Hard cool daylight key from upper left, deep
+    shadows. Hyperrealistic editorial product photography, comparison
+    still."
 
   ============================================================
   IF subject_focus == "theme_artifact":

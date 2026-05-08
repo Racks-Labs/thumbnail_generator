@@ -23,6 +23,8 @@ scene:
 
 rules:
   - "If reference logo image(s) are provided alongside this prompt: use them AS-IS as the actual brand identity in the scene. Do not re-imagine or restyle them. Keep their exact shapes and colors. Place them creatively into the scene as described."
+  - "HERO DOMINATES THE FRAME. The main subject (logo, product, artifact, person) must occupy at least 50% of the frame width and 40% of the frame height. Frame it as a tight hero close-up, not a wide context shot. Background stays out-of-focus and minimal."
+  - "If the logo is printed on an object (mug, box, hoodie, billboard, etc.), the OBJECT itself must fill most of the frame so the printed logo on it reads instantly large. No tiny mugs on big desks."
   - "ABSOLUTELY NO TEXT (other than what's part of the provided logos) anywhere in the image — no headlines, no captions, no UI labels, no readable signs, no watermarks. Text will be added later in post-production."
   - "If a laptop screen / mockup screen is shown, the screen should display abstract UI shapes only, NOT readable text — UNLESS it shows a provided brand logo as wallpaper."
   - "Single full-bleed cinematic photograph"
