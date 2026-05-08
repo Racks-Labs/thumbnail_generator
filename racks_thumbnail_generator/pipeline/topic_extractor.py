@@ -89,9 +89,22 @@ Return a JSON object with:
   STEP 1 — Famous brand test.
     Does the reel center on a brand the average non-tech Spanish Instagram
     user instantly recognizes from its logo alone (no text), in <0.5s?
-    Examples that PASS: Google, Apple, iPhone, MacBook, ChatGPT, OpenAI,
-    YouTube, Instagram, TikTok, WhatsApp, Tesla, Spotify, Netflix,
-    Microsoft, Windows, Amazon, Meta, Facebook, X / Twitter, Uber, PayPal, Visa.
+    Examples that PASS:
+      - Tech / consumer: Google, Apple, iPhone, MacBook, iPad, AirPods,
+        ChatGPT, OpenAI, YouTube, Instagram, TikTok, WhatsApp, Tesla,
+        Spotify, Netflix, Microsoft, Windows, Office, Excel, Amazon, Meta,
+        Facebook, X / Twitter, LinkedIn, Uber, PayPal, Visa, Mastercard,
+        Disney, Disney+, HBO, Pinterest, Snapchat, Telegram, Zoom.
+      - Creative / design suites (TREATED AS FAMOUS — they have iconic
+        instantly-recognizable logos): Adobe, Photoshop, Illustrator,
+        Premiere, Premiere Pro, After Effects, Lightroom, InDesign,
+        Acrobat, Adobe Creative Cloud, Figma, Canva, Procreate, Sketch.
+      - Dev / hosting (icon-recognizable to general dev/creator audience):
+        GitHub, GitLab, Docker, Vercel, AWS, Azure, Cloudflare, Linux.
+      - Gaming / streaming: Twitch, Steam, PlayStation, Xbox, Nintendo,
+        Roblox, Minecraft, Fortnite.
+      - Brands of physical products: Nike, Adidas, Coca-Cola, Pepsi,
+        McDonald's, Starbucks, BMW, Mercedes, Audi, Toyota, Ford, IKEA.
     → If YES → "brand_product".
     → If NO (Claude, Cursor, Notion, Linear, Sora, Suno, Runway, n8n,
       Zapier, Replit, v0, any niche/new/beta tool) → continue to STEP 2.
@@ -170,10 +183,25 @@ Return a JSON object with:
   COMMON HARD CONSTRAINTS — banned in EVERY scene type:
   * NO holograms, NO neon, NO glowing floating screens, NO futuristic interfaces, NO blue/purple sci-fi lighting, NO server rooms with rocks
   * NO fictional / made-up / symbolic objects (no "AI token coins", no "energy orbs", no abstract symbols)
+  * NO ABSTRACT HEROES — the main subject must be a LITERAL, instantly
+    recognizable real-world thing (a real product, a real logo, a real
+    object). NEVER abstract wireframes, abstract digital art, abstract
+    gears floating in space, abstract gradients as the hero, generic
+    geometric shapes as the hero. Viewers must name what they see in
+    under 1 second.
+  * HERO SATURATION — the protagonist (logo, product, or artifact) must
+    be HIGHLY SATURATED and visually striking. Render brand logos in
+    their FULL official colors at full vibrancy, not desaturated, not
+    muted, not greyscale, not "moody monochrome". The rest of the frame
+    stays dark and restrained — the hero is the only saturated thing,
+    and it pops hard.
   * NO clutter — strip out background props
   * Photorealistic, cinematic, shallow depth of field, premium editorial / commercial photography quality
   * HIGH CONTRAST CHIAROSCURO lighting — single hard key light, deep dark shadows
   * NO TEXT in the image (text gets composited later)
+  * READABILITY TEST — a viewer scrolling Instagram for 0.5 seconds must
+    INSTANTLY identify what the hero is. If your scene needs explanation,
+    it fails. Pick obvious over clever.
 
   ============================================================
   IF subject_focus == "brand_product":
@@ -181,23 +209,33 @@ Return a JSON object with:
   Hero the BRAND or PRODUCT itself. NO person in the frame. Use creative product / hero photography.
 
   STRUCTURE:
-  * MAIN subject: the brand's recognizable mark or product, rendered in a real physical / 3D form. NOT a flat 2D logo on a screen — physical mark sitting in the scene. Examples:
-    - Google: a tangible 3D Google "G" letter (full color: red/yellow/green/blue) as a physical sculpture — emerging from a kraft cardboard box, on a black pedestal, on a wooden table, etc.
-    - Claude: a tangible "Claude" wordmark sculpted in matte material, or the official orange/cream Claude visual identity rendered as a physical object
-    - ChatGPT: the OpenAI swirl logo as a 3D rendered metal/glass object
-    - Apple: a real MacBook or iPhone shown front-and-center, beautifully lit
-    - Notion: a 3D Notion "N" sculpture
-    - Tesla: an actual Tesla car or the T logo
+  * MAIN subject: the brand's recognizable mark or product, rendered in a real physical / 3D form, in FULL OFFICIAL BRAND COLORS at high saturation. NOT a flat 2D logo on a screen — physical mark sitting in the scene. NOT desaturated. The logo must be unmistakably itself. Examples:
+    - Google: a tangible 3D Google "G" letter (full color: red/yellow/green/blue) as a physical sculpture
+    - Adobe: a tangible 3D Adobe "A" stylized logo in vivid Adobe RED (#FA0F00), rendered as a glossy or matte sculpture
+    - Photoshop: a 3D rendered Photoshop "Ps" badge in vivid Photoshop blue (#001E36 with cyan accent), or a giant glossy app icon
+    - Illustrator: a 3D Illustrator "Ai" badge in vivid orange (#FF9A00)
+    - Premiere: a 3D Premiere Pro "Pr" badge in vivid violet (#9999FF)
+    - Figma: a 3D Figma logo with all four colored circles (red/orange/green/blue/purple) as physical sculpture
+    - Claude: a tangible "Claude" wordmark sculpted in matte material in warm cream and burnt orange tones (Claude's official colors)
+    - ChatGPT: the OpenAI swirl logo as a 3D rendered glossy object in teal/black
+    - Apple: a real MacBook or iPhone shown front-and-center, beautifully lit; the Apple logo in clean silver
+    - Spotify: 3D Spotify circle logo in vivid green (#1DB954)
+    - YouTube: 3D YouTube play button in vivid red (#FF0000) on white rounded rectangle
+    - Instagram: 3D Instagram camera icon with the official magenta-orange-purple gradient
+    - Notion: 3D Notion "N" sculpture in clean black/white
+    - Tesla: an actual Tesla car, or the red T logo
   * SECONDARY element (optional, only if it adds to the message): a real physical container or context — a kraft cardboard box (often with a stamp like "GRATIS", "NEW", "FREE" if relevant — but the stamp text will be added separately, just describe the box as having a printable stamp area), gift wrapping, a wooden crate, a museum-style pedestal, a Polaroid-style frame.
   * Setting: dark studio backdrop OR softly out-of-focus modern office bokeh OR clean dark wooden surface. Empty negative space around the hero. The hero MUST dominate the frame.
   * Lighting: dramatic single key light highlighting the brand mark, with light leaks / colored rim light if it matches the brand colors (e.g. Google = subtle multi-color rainbow light leak in the background; Apple = clean white-on-white; Claude = warm cream/orange tones).
   * Color palette: dominated by the BRAND'S OWN color identity (Google = full RGB color pop; Claude = warm cream/orange; OpenAI = teal/black; Apple = silver/white). The rest of the frame stays dark/neutral.
   * Style: premium product photography, commercial advertising still, 3D render quality, hyperrealistic.
 
-  Good "brand_product" examples:
-  - GOOGLE: "A tangible 3D rendered Google 'G' letter (full color: red, yellow, green, blue) emerges dramatically from an open kraft cardboard box sitting on a dark wooden table. The box has a prominent flat blank area on its front face suitable for a printed stamp. Soft polystyrene packing peanuts spill around the G. Subtle multicolor rainbow light leak from the right side, deep dark out-of-focus office bokeh in the background. Dramatic key light from above-right, deep shadows on the box. Premium commercial product photography, hyperrealistic, cinematic, shallow depth of field."
-  - CLAUDE: "A 3D rendered matte ceramic 'Claude' wordmark sculpture in warm cream and burnt orange tones, sitting on a polished dark wooden table against a near-black blurred studio background. A single warm tungsten key light from the upper left rakes across the lettering creating soft warm shadows. Premium commercial 3D product still, hyperrealistic, cinematic, editorial."
-  - APPLE: "A pristine open MacBook Pro centered on a clean dark slate desk in a darkened minimalist studio. The screen glows softly with a clean abstract gradient. Hard key light from the upper left, deep shadows on the right. No other objects. Premium commercial product photography, hyperrealistic, A24 film still."
+  Good "brand_product" examples (note: hero in FULL official colors):
+  - GOOGLE: "A tangible 3D rendered Google 'G' letter in vivid full official colors (bright red #EA4335, yellow #FBBC05, green #34A853, blue #4285F4) emerges dramatically from an open kraft cardboard box on a dark wooden table. Polystyrene packing peanuts spill around the G. Subtle multicolor rainbow light leak from the right, deep dark out-of-focus office bokeh in the background. Dramatic key light from above-right, deep shadows on the box. Premium commercial product photography, hyperrealistic."
+  - ADOBE: "A tangible 3D rendered Adobe 'A' stylized logo in vivid Adobe red (#FA0F00) with glossy plastic finish, sitting on a polished dark surface in a darkened studio. Subtle red rim light from behind. Hard key light from upper left, deep dark shadow trailing right. Empty negative space around the logo. Premium commercial 3D product photography, hyperrealistic, cinematic."
+  - PHOTOSHOP: "A giant 3D Photoshop 'Ps' badge — a glossy rounded square with the iconic deep navy blue background (#001E36) and the bold cyan 'Ps' lettering — sits front and center on a dark polished surface in a moody studio. Cyan rim light from behind, hard key light from above-left, deep shadows. Hyperrealistic 3D product render, cinematic."
+  - SPOTIFY: "A glossy 3D Spotify circle logo in vivid Spotify green (#1DB954) with the three sound waves clearly visible, floats above a dark polished surface in a moody studio. Green rim light, hard key light from upper left, deep shadows. Hyperrealistic 3D product render, cinematic."
+  - APPLE: "A pristine silver MacBook Pro centered on a clean dark slate desk in a darkened minimalist studio, the glowing Apple logo on the lid clearly visible. Hard key light from upper left, deep shadows on the right. No other objects. Premium commercial product photography, hyperrealistic."
 
   ============================================================
   IF subject_focus == "theme_artifact":
@@ -211,6 +249,11 @@ Return a JSON object with:
     physical / on-screen object. Pick the artifact from STEP 2's list
     (UI mockups, code editor, mixing console, candlestick chart on
     paper, plated dish, blueprints, camera body, etc.).
+  * The artifact must be LITERAL and INSTANTLY READABLE. NEVER abstract
+    wireframes, NEVER abstract floating gears, NEVER abstract digital
+    art compositions, NEVER vague "creative output" symbols. If a
+    viewer can't say "that's a UI mockup" / "that's a code editor" /
+    "that's a stock chart" in <1 second, the scene fails.
   * Multiple instances OK: 2-4 artifacts arranged compositionally are
     fine (e.g. 3 phone mockups stacked, several blueprint sheets fanned,
     multiple cooking ingredients), as long as they all reinforce the
@@ -219,7 +262,12 @@ Return a JSON object with:
     Empty negative space lets the artifact dominate.
   * Lighting: dramatic key light from one side, deep shadows. Cool
     daylight for tech/design topics, warm tungsten for craft/lifestyle
-    topics. The artifact's natural colors are the only saturation.
+    topics.
+  * SATURATION: the artifact must be in vivid, recognizable colors at
+    high saturation (real UI in colorful screens, real food in real
+    plate colors, real sheet music in clean black on cream). The rest
+    of the frame stays dark and restrained — the artifact is the
+    saturated hero.
   * NO person, NO faces, NO body parts unless the artifact is literally
     held by a single hand entering frame (e.g. a hand holding a paint
     brush over a palette — but no full body or face).
@@ -324,6 +372,9 @@ Return a JSON object with:
   - For UI design reel: "A man at a laptop in a dark room" (wrong archetype — generic person scene loses the topic; should hero phone mockups / wireframes via theme_artifact)
   - For code reel: "A developer staring at a screen" (generic — should hero the code itself via theme_artifact)
   - For cooking reel: "A chef holding a knife" (lazy — should hero the plated dish or the ingredients via theme_artifact)
+  - For Adobe / Photoshop / Illustrator / Figma reel (FAMOUS BRAND): "Floating wireframe gears next to abstract gradient digital art" (WRONG archetype + abstract — Adobe is famous, the scene must hero the bright red Adobe 'A' logo or the Ps/Ai/Pr/Figma badge in vivid official colors via brand_product, never abstract shapes)
+  - "Abstract wireframe / floating gears / abstract digital art / vague creative output" as the hero (BANNED — must be a real recognizable product or logo, not abstract)
+  - "...rendered in cool grey tones" / "...desaturated palette including the hero" (WRONG — the hero must be vividly saturated, only the background is dark/restrained)
 """
 
 
