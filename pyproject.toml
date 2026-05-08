@@ -1,6 +1,6 @@
 [project]
 name = "racks-thumbnail-generator"
-version = "0.6.3"
+version = "0.6.4"
 description = "Automatic thumbnail generator for Racks reels (video → AI scene + composited title)"
 readme = "README.md"
 requires-python = ">=3.12"
