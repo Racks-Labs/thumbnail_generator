@@ -22,8 +22,9 @@ scene:
     - Avoid placing important details, faces, or product features in the bottom 30% — they will be covered by text and partially hidden by Instagram's UI.
 
 rules:
-  - "ABSOLUTELY NO TEXT anywhere in the image — no headlines, no captions, no UI text, no signs, no logos with readable letters, no labels, no watermarks. Text will be added later in post-production."
-  - "If a laptop screen is shown, the screen should display abstract UI shapes only, NOT readable text or wordmarks."
+  - "If reference logo image(s) are provided alongside this prompt: use them AS-IS as the actual brand identity in the scene. Do not re-imagine or restyle them. Keep their exact shapes and colors. Place them creatively into the scene as described."
+  - "ABSOLUTELY NO TEXT (other than what's part of the provided logos) anywhere in the image — no headlines, no captions, no UI labels, no readable signs, no watermarks. Text will be added later in post-production."
+  - "If a laptop screen / mockup screen is shown, the screen should display abstract UI shapes only, NOT readable text — UNLESS it shows a provided brand logo as wallpaper."
   - "Single full-bleed cinematic photograph"
   - "Premium photorealistic quality, A24 film still aesthetic, shallow depth of field"
   - "Hero subject must sit in the upper-middle region (20-60% from top); bottom 25-30% reserved as quieter negative space for text overlay"

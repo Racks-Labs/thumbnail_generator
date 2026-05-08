@@ -21,6 +21,7 @@ from racks_thumbnail_generator.config import (
 from racks_thumbnail_generator.pipeline.audio import extract_audio
 from racks_thumbnail_generator.pipeline.transcriber import get_transcriber
 from racks_thumbnail_generator.pipeline.topic_extractor import extract_topic
+from racks_thumbnail_generator.pipeline.logo_fetch import fetch_brand_logos
 from racks_thumbnail_generator.generator.prompt_builder import build_prompt
 from racks_thumbnail_generator.generator.image_gen import generate_thumbnail, DEFAULT_MODEL
 from racks_thumbnail_generator.compositor.text_overlay import overlay_text
@@ -60,6 +61,11 @@ config_app = typer.Typer(
 )
 app.add_typer(config_app, name="config")
 console = Console()
+
+
+def _safe_logo_name(query: str) -> str:
+    import re
+    return re.sub(r"[^a-zA-Z0-9_-]", "_", query.lower()).strip("_")[:40] or "brand"
 
 
 def _mask(value: str) -> str:
@@ -147,24 +153,37 @@ def generate(
     console.print(f"  Scene focus: [bold cyan]{content.subject_focus}[/bold cyan]")
     console.print(Panel(content.concepto_visual, title="Concepto visual"))
 
-    # Step 4a: Generate background scene with Nanobanana
+    # Step 4a: Fetch brand logos (if any) for use as reference images
+    references = []
+    if content.brand_queries:
+        console.print(f"[bold]4/4[/bold] Fetching {len(content.brand_queries)} brand logo(s)...")
+        logo_dir = settings.output_dir / "_logos"
+        references = fetch_brand_logos(content.brand_queries, logo_dir)
+        for q in content.brand_queries:
+            matched = any(_safe_logo_name(q) in r.name for r in references)
+            status = "[green]✓[/green]" if matched else "[yellow]✗ not found[/yellow]"
+            console.print(f"  {status} {q}")
+
+    # Also pick up any user-provided refs in cwd/references/
+    user_refs = Path.cwd() / "references"
+    if user_refs.exists():
+        references += [
+            r for r in user_refs.glob("*")
+            if r.suffix.lower() in (".png", ".jpg", ".jpeg")
+        ]
+
+    # Step 4b: Generate background scene with Nanobanana
     prompt = build_prompt(template_path, content, settings.accent_color)
 
     if show_prompt:
         console.print(Panel(prompt, title="Final Nano Banana prompt", border_style="cyan"))
+        if references:
+            console.print(f"[dim]Reference images that would be passed: {[str(r) for r in references]}[/dim]")
         console.print("[yellow]--show-prompt: skipping image generation.[/yellow]")
         audio_path.unlink(missing_ok=True)
         return
 
-    console.print("[bold]4/4[/bold] Generating background scene with Nanobanana...")
-
-    references = []
-    user_refs = Path.cwd() / "references"
-    if user_refs.exists():
-        references = [
-            r for r in user_refs.glob("*")
-            if r.suffix.lower() in (".png", ".jpg", ".jpeg")
-        ]
+    console.print("Generating background scene with Nanobanana...")
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     background_path = settings.output_dir / f"_bg_{timestamp}.png"

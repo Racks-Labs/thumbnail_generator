@@ -16,6 +16,7 @@ class ThumbnailContent(BaseModel):
     tono: str
     subject_focus: SubjectFocus
     concepto_visual: str
+    brand_queries: list[str]
 
 
 EXTRACTION_PROMPT = """\
@@ -193,6 +194,31 @@ Return a JSON object with:
     no visual artifact. Niche default.
   =====================================================================
 
+- brand_queries: List of search queries (one per brand) that the pipeline
+  will use to download official logo PNGs from Wikipedia and pass them as
+  reference images to the image generator. The image generator will then
+  composite the REAL logo into the scene (not an invented version).
+
+  Rules:
+  * Include EVERY named brand / app / tool / company / product the reel
+    talks about, even if subject_focus is not "brand_product". Useful for
+    person scenes where a brand wordmark appears on a laptop / mug, and
+    for theme_artifact scenes where a brand logo appears on the artifact.
+  * Each query string must be the canonical name that maximizes the
+    chance of hitting the right Wikipedia page. Prefer "Adobe Inc.",
+    "Sony Group Corporation", "Blender (software)", "Autodesk Maya",
+    "Anthropic" over ambiguous short names. Append disambiguation in
+    parentheses when a plain name is too generic ("Apple Inc." not "Apple").
+  * Order them by importance (the main brand of the reel first).
+  * Empty list [] when the reel has no specific named brand.
+
+  Examples:
+  - Reel about Adobe Photoshop → ["Adobe Photoshop"]
+  - Reel about Sony cameras → ["Sony Group Corporation", "Sony Alpha"]
+  - Reel about Claude tool by Anthropic → ["Anthropic"]  (Anthropic page has Claude logo)
+  - Reel about Blender vs Maya → ["Blender (software)", "Autodesk Maya"]
+  - Reel about an unbranded mindset topic → []
+
 - concepto_visual: Cinematic scene description in English for an AI image generator. The composition depends on subject_focus.
 
   COMMON HARD CONSTRAINTS — banned in EVERY scene type:
@@ -224,67 +250,94 @@ Return a JSON object with:
   Hero the BRAND or PRODUCT itself. NO person in the frame. Use creative product / hero photography.
 
   STRUCTURE:
-  * MAIN subject: the brand's actual recognizable mark or hero product,
-    rendered as a real physical / 3D form in its FULL official brand
-    colors at high saturation. The logo must be unmistakably itself —
-    a viewer of the brand's space would recognize it instantly.
-  * Use your own knowledge of the brand to describe its actual logo
-    shape and primary colors. Examples of the right level of detail:
-    - "3D Adobe 'A' stylized logo in vivid Adobe red, glossy finish"
-    - "3D Blender torus-eye mark with the iconic orange outer torus
-      and deep blue inner sphere, glossy 3D"
-    - "3D Sony wordmark sculpted in clean glossy black with subtle
-      chrome edges"
-    - "3D Spotify circle logo in vivid Spotify green with the three
-      sound waves clearly visible"
-    - "Pristine silver MacBook Pro front-and-center, glowing Apple
-      logo on the lid clearly visible"
+  * MAIN subject: the brand's actual logo or hero product, integrated
+    into a creative real-world scene. The pipeline will pass the
+    actual logo PNG as a reference image — your concepto_visual just
+    needs to describe the SCENE that incorporates that logo. Don't
+    describe the logo's exact colors / pixel-perfect shape — the
+    real logo file does that for you. Reference it as "the provided
+    <BRAND> logo".
+
+  * VARIETY IS REQUIRED. Do NOT default to "3D logo on pedestal" every
+    time. Pick a different real-world placement for the logo each time.
+    Examples of placements (rotate between these / invent similar ones):
+    - Logo on a kraft cardboard box (gift wrap / packaging)
+    - Logo printed on a hoodie / t-shirt being held up
+    - Logo on a coffee mug sitting next to a planner
+    - Logo on a glass storefront window with reflection
+    - Logo painted as a mural on a brick wall
+    - Logo on a vintage neon sign hanging over a bar / studio (real
+      neon, not glowing sci-fi)
+    - Logo embroidered on a baseball cap on a dark wood surface
+    - Logo on a sticker stuck to a laptop lid
+    - Logo on a billboard above a city street at dusk
+    - Logo on a polished silver pin badge held between fingers
+    - Logo as an enamel paperweight on a desk
+    - Logo printed on a tote bag hanging on a chair
+    - Logo as a giant inflatable balloon at a trade show
+    - Logo on a tablet screen as wallpaper, the tablet propped on a stand
+    - Logo etched into wood / marble / brushed metal
+    - Logo displayed inside a clear acrylic / glass cube paperweight
+    - Logo on a vinyl record sleeve
+    - Logo on a magazine cover
+    - Logo on a hardback book spine
+    - Logo woven into fabric of a folded blanket
+    - Logo as the badge on the front of a sneaker / cap / car
+    - 3D logo sculpture on a pedestal (FINE OCCASIONALLY, but not the default)
   * If the brand has a specific iconic product (Tesla car, MacBook,
-    iPhone, AirPods), the product itself can be the hero instead of
-    just the logo.
-  * Do NOT invent colors you're not confident about. If you only
-    know the brand's general visual identity loosely, describe what
-    you DO know (general shape, dominant color) and skip the rest.
-    Never make up fake brand colors.
+    iPhone, AirPods), the product itself can be the hero with the logo
+    naturally visible on it.
+
+  * Multi-brand reels: when brand_queries contains 2+ entries, the
+    scene should integrate ALL the logos in a believable composition
+    (e.g. two product boxes side by side, two mugs on a desk, multiple
+    storefront signs, head-to-head comparison setup). Don't just pick
+    one and ignore the others.
+
+  * The provided reference logo image(s) are the source of truth for
+    visual identity. Use them. Do NOT re-imagine or restyle the logo.
   * SECONDARY element (optional, only if it adds to the message): a real physical container or context — a kraft cardboard box (often with a stamp like "GRATIS", "NEW", "FREE" if relevant — but the stamp text will be added separately, just describe the box as having a printable stamp area), gift wrapping, a wooden crate, a museum-style pedestal, a Polaroid-style frame.
   * Setting: dark studio backdrop OR softly out-of-focus modern office bokeh OR clean dark wooden surface. Empty negative space around the hero. The hero MUST dominate the frame.
   * Lighting: dramatic single key light highlighting the brand mark, with light leaks / colored rim light if it matches the brand colors (e.g. Google = subtle multi-color rainbow light leak in the background; Apple = clean white-on-white; Claude = warm cream/orange tones).
   * Color palette: dominated by the BRAND'S OWN color identity (Google = full RGB color pop; Claude = warm cream/orange; OpenAI = teal/black; Apple = silver/white). The rest of the frame stays dark/neutral.
   * Style: premium product photography, commercial advertising still, 3D render quality, hyperrealistic.
 
-  Good "brand_product" example pattern (apply the same template to
-  whatever brand the reel is about — use your own knowledge of the
-  brand's actual logo + colors):
+  Good "brand_product" examples (each uses a different placement —
+  rotate creatively, don't repeat the same setup):
 
-  TEMPLATE: "A tangible 3D rendered <BRAND LOGO described accurately>
-  in vivid <BRAND COLORS at high saturation>, glossy finish, sitting
-  on a polished dark surface in a darkened studio. Subtle <brand
-  color> rim light from behind. Hard key light from upper left, deep
-  dark shadow trailing right. Empty negative space around the logo.
-  Premium commercial 3D product photography, hyperrealistic,
-  cinematic, shallow depth of field."
-
-  Concrete instances:
-  - GOOGLE: "A tangible 3D Google 'G' letter in vivid red, yellow,
-    green and blue, emerging from an open kraft cardboard box on a
-    dark wooden table. Subtle multicolor rim light from behind, dark
-    out-of-focus office bokeh. Hard key from above-right, deep
-    shadows. Premium commercial product photography, hyperrealistic."
-  - ADOBE: "A tangible 3D Adobe 'A' stylized logo in vivid Adobe red,
-    glossy finish, on a polished dark surface in a darkened studio.
-    Red rim light from behind, hard key from upper left, deep shadow
-    trailing right. Empty negative space. Premium commercial 3D
-    product render, hyperrealistic, cinematic."
-  - APPLE: "A pristine silver MacBook Pro centered on a clean dark
-    slate desk in a darkened minimalist studio, the glowing Apple
-    logo clearly visible on the lid. Hard key from upper left, deep
-    shadows on the right. No other objects. Premium commercial
-    product photography, hyperrealistic."
-  - SPOTIFY: "A glossy 3D Spotify circle logo in vivid Spotify green
-    with the three sound waves clearly visible, floats above a dark
-    polished surface in a moody studio. Green rim light, hard key
-    from upper left, deep shadows. Hyperrealistic 3D product render,
-    cinematic."
+  - GOOGLE (box): "The provided Google 'G' logo emerges from a kraft
+    cardboard box on a dark wooden table. Polystyrene packing peanuts
+    spill around it. Subtle multicolor rim light, dark out-of-focus
+    office bokeh, hard key from above-right, deep shadows. Premium
+    commercial product photography, hyperrealistic."
+  - ADOBE (storefront sign): "The provided Adobe logo glows softly on
+    a glass storefront window at dusk, with reflections of city lights
+    and a darkened sidewalk in front. Hard key from a streetlamp upper
+    left, deep shadows. Cinematic editorial photography, hyperrealistic."
+  - APPLE (product hero): "A pristine silver MacBook Pro centered on
+    a clean dark slate desk in a darkened minimalist studio, the
+    glowing Apple logo on the lid clearly visible. Hard key from
+    upper left, deep shadows on the right. No other objects. Premium
+    commercial product photography, hyperrealistic."
+  - SPOTIFY (mug): "The provided Spotify logo printed in vivid green
+    on a matte black ceramic coffee mug, the mug centered on a dark
+    polished wooden desk against a near-black backdrop. Wisp of steam
+    rising. Hard warm key from upper left, deep shadows. Hyperrealistic
+    editorial product photography."
+  - BLENDER (hoodie): "The provided Blender logo embroidered on the
+    chest of a folded grey heather hoodie laying on a dark walnut
+    surface. Hard key light from upper left raking across the fabric
+    weave, deep shadows on the right. Hyperrealistic editorial
+    photography, premium streetwear catalog feel."
+  - SONY (vinyl): "The provided Sony logo printed on the cover of a
+    matte black vinyl record sleeve, the sleeve standing upright in a
+    record store row, soft warm tungsten light from above, dark
+    out-of-focus shop bokeh behind. Hyperrealistic editorial."
+  - MULTI-BRAND (Adobe vs Figma): "Two glossy ceramic coffee mugs sit
+    side by side on a polished dark wooden desk. The left mug shows
+    the provided Adobe logo, the right mug shows the provided Figma
+    logo. Hard cool daylight key from upper left, deep shadows.
+    Hyperrealistic editorial product photography, comparison still."
 
   ============================================================
   IF subject_focus == "theme_artifact":
