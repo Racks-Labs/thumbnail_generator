@@ -87,87 +87,118 @@ Return a JSON object with:
   DECISION TREE — apply IN THIS ORDER, stop at first match:
   =====================================================================
 
-  STEP 1 — Recognizable brand test.
-    Does the reel center on a NAMED brand / app / tool / software /
-    company / product?
+  CORE QUESTION before anything else:
+    What is the VISUAL VALUE this reel teaches? What does the viewer
+    walk away SEEING? Be specific:
+      - "How to upscale image resolution" → transformation: blurry → sharp
+      - "Edit videos with AI in 30s" → before/after of an edit
+      - "Adobe Photoshop hidden tool" → the tool's effect on an image
+      - "What is Anthropic" → brand identity itself
+      - "Sony A7iv vs Canon R6" → two cameras side-by-side
+      - "Stop wasting money on tokens" → savings concept (money + brand)
+      - "Best 7 AI design apps" → grid of apps / mockups
+      - "My morning routine" → ritual / lifestyle still
 
-    Use your own judgment as a language model with broad training to
-    decide whether the brand has a documented public visual identity
-    (an actual logo + defined brand colors) that you can describe
-    accurately. If you can confidently name the logo shape and the
-    primary brand colors of the brand mentioned, it passes — render
-    its actual logo as the hero in brand_product.
+    The VALUE drives the archetype. The brand mentioned is often
+    INCIDENTAL — it's the tool the viewer uses to achieve the value,
+    not the value itself. Ask: would the thumbnail still communicate
+    the value if the brand logo were removed? If yes, the brand is
+    incidental → favor theme_artifact. If no (the brand IS the topic),
+    favor brand_product.
 
-    Examples to anchor your judgment (NOT exhaustive — use any brand
-    you know): Sony, Google, Adobe, Photoshop, Blender, Autodesk,
-    Maya, AutoCAD, Claude, ChatGPT, Apple, Spotify, YouTube, Nike,
-    Coca-Cola, Tesla, Figma, Cinema 4D, Unreal, Unity, etc. — and
-    any other brand of similar or greater public presence.
+  STEP 1 — Is the BRAND itself the topic?
+    Triggers (pick brand_product):
+    - Reel is a review / first look / hot take ON the brand
+    - Reel asks "what is X" / "X is dead" / "X vs Y" (brand-on-brand)
+    - Reel is brand identity / launch / history / comparison
+    - The headline you wrote literally names the brand as the main noun
 
-    Edge cases:
-    - Brand is a small startup / hobby project / single-dev tool with
-      no real brand kit you can recall → STEP 2 (theme_artifact or
-      person, integrating the wordmark on a laptop / sticker).
-    - You're unsure about exact logo or colors but you recognize the
-      brand exists → still pick brand_product, but describe the logo
-      using only what you're confident about (general shape, dominant
-      color). Do NOT invent fake colors. If genuinely unknown, fall
-      to STEP 2.
+    NOT triggers (do NOT pick brand_product, even if brand mentioned):
+    - Reel teaches a TECHNIQUE that happens to use the brand as a tool
+      ("how to upscale resolution with Freepik" → the technique is the
+      hero, not Freepik)
+    - Reel shows an EFFECT or TRANSFORMATION the brand produces
+      ("Photoshop AI fill before/after" → the transformation is hero)
+    - Reel demos an OUTCOME ("designs you can make with Figma" → the
+      designs are hero)
+    - Reel uses brand as one of MANY tools mentioned in passing
 
-    → Brand passes → "brand_product".
-    → When in doubt and the brand IS the topic → DEFAULT TO
-      "brand_product". Showing the actual logo is almost always more
-      readable than an abstract scene or generic person.
-    → If no named brand at all → continue to STEP 2.
+    → Brand IS the topic → "brand_product".
+    → Brand is incidental → continue to STEP 2.
 
-  STEP 2 — Theme artifact test.
-    Does the reel's TOPIC have iconic visual artifacts that VISUALLY
-    represent the topic better than any human face or single still-life
-    object would? An "artifact" = the tangible OUTPUT or TOOL of the topic
-    itself, instantly readable as the subject matter.
+    For brand_product to apply, you should also be confident you know
+    the brand's actual logo shape and primary colors. If genuinely
+    unknown → STEP 2.
 
-    Examples by topic → artifact:
-      - UI / UX design / interfaces      → mockup screens, wireframes,
-                                            Figma-style layouts, app screens
-      - Code / programming / dev tools   → code editor close-up with
-                                            colored syntax (no readable text),
-                                            terminal close-up with ASCII shapes
-      - Music / audio / production       → studio monitors, mixing console,
-                                            synthesizer keys, audio waveform
-                                            on a real screen, analog tape reel
-      - Finance / stocks / trading       → printed candlestick chart on
-                                            paper, ledger pages with
-                                            handwritten figures, stock
-                                            tickers on a vintage screen
-      - Cooking / food / recipes         → plated dish overhead, raw
-                                            ingredients arranged, knife on
-                                            cutting board
-      - Fashion / style                  → garment hanging, shoe close-up,
-                                            fabric folds, accessory on stand
-      - Architecture / interior design   → architectural blueprints, scale
-                                            model, miniature room set
-      - Photography / video editing      → camera body close-up, film strips,
-                                            color grading swatches
-      - Writing / content                → typewriter, manuscript with red
-                                            edits, opened journal
-      - Fitness / workout                → kettlebell, gym bench, jump rope
-      - Beauty / skincare                → product bottles, brushes, palette
-      - Crypto / blockchain              → physical metal coin (Bitcoin),
-                                            paper wallet print
-      - 3D / motion / VFX                → 3D render of a wireframe object,
-                                            grease-pencil storyboard frames
-      - Productivity / planning          → analog planner, pen, sticky notes
-      - Marketing / ads                  → printed billboard miniature,
-                                            tear-sheet magazine ad
+  STEP 2 — Theme artifact / concept test.
+    Does the reel teach a TECHNIQUE, EFFECT, TRANSFORMATION, COMPARISON,
+    OUTCOME or visible concept? If yes → "theme_artifact" with a scene
+    composition tailored to the concept.
 
-    Trigger phrase test: if the headline or transcript implies the topic
-    PRODUCES something visual ("la IA diseña interfaces" → interfaces;
-    "código limpio" → code; "edita videos así" → film/timeline), the
-    artifact wins over a person.
-    → If YES → "theme_artifact".
-    → If NO (topic is purely human: mindset, advice, money habits,
-      relationships, motivation, biographical, opinion takes) → continue
-      to STEP 3.
+    SCENE PATTERN — pick the one best suited to the reel. ROTATE — do
+    NOT default to product photography of a single object. Patterns:
+
+    a) BEFORE / AFTER VERTICAL SPLIT — for transformations: low-res →
+       high-res, messy → clean, old → new, rough → polished, drab →
+       vibrant. Example: "Vertical split: left half a blurry pixelated
+       portrait, right half the same portrait crisp and sharp."
+
+    b) BEFORE / AFTER HORIZONTAL SPLIT — same as above but top/bottom.
+
+    c) DIAGONAL TRANSITION / WIPE — transformation mid-process across a
+       diagonal line cutting the frame.
+
+    d) BEFORE → ARROW → AFTER — two states with a visible arrow,
+       flow line, or stacked triptych showing progression.
+
+    e) SIDE-BY-SIDE COMPARISON — A vs B (two cameras, two phones, two
+       plates, two charts). Equal weight on both halves.
+
+    f) GRID / SHEET ARRANGEMENT — N items laid out as a sample sheet
+       (e.g. "Best 7 AI apps" → 7 phone mockups arranged 2x4; "5 color
+       palettes" → 5 color swatches; "10 fonts" → typographic specimen).
+
+    g) MACRO REVEAL / MAGNIFIER — close-up of detail being revealed
+       (e.g. magnifying glass over fabric, lens revealing pixels at
+       extreme zoom).
+
+    h) HAND IN ACTION — a single hand performing the technique on the
+       artifact (hand sharpening a knife, hand holding a polaroid mid-
+       development, hand swiping a tablet). Brings the technique to life.
+
+    i) INPUT → OUTPUT — show the raw input and the finished output in
+       the same composition (raw ingredients next to plated dish; sketch
+       next to finished render; tangled wires next to clean setup).
+
+    j) ARTIFACT HERO — single iconic visual output filling the frame
+       (UI mockups, code editor close-up, stock chart, plated dish,
+       blueprints, camera body, mixing console, sheet music, paint
+       palette, garment, scale model, etc.). Use only when the artifact
+       alone tells the story; otherwise pick a multi-state pattern.
+
+    Topic → artifact lookup (fallback if pattern unclear):
+      - UI / UX / interfaces → phone or screen mockups
+      - Code / dev → code editor close-up with colored syntax
+      - Music / audio → mixing console, synthesizer, waveform
+      - Finance / trading → candlestick chart on paper, ledger
+      - Cooking / food → plated dish overhead, ingredients
+      - Photography / video editing → camera body, film strips
+      - 3D / motion / VFX → 3D model render, storyboard frames
+      - Writing / content → typewriter, edited manuscript
+      - Fitness → kettlebell, gym bench
+      - Beauty → product bottles, brushes
+      - Crypto → physical coin (Bitcoin)
+      - Productivity → planner, sticky notes
+
+    Brand integration in theme_artifact: when brand_queries is non-empty
+    AND scene archetype is theme_artifact, the brand logo should appear
+    NATURALLY in the scene as a label / tag / corner watermark / device
+    edge / app icon on a phone mockup — never as the dominant hero
+    (that's brand_product's job). The TRANSFORMATION or CONCEPT is the
+    hero. The logo is the credit.
+
+    → Concept fits a pattern → "theme_artifact".
+    → No clear visual concept and no brand → continue to STEP 3.
 
   STEP 3 — Person test.
     Topic is fundamentally about a HUMAN doing/feeling something (advice,
@@ -185,13 +216,17 @@ Return a JSON object with:
 
   =====================================================================
   TIE-BREAKERS:
-  - If the reel mentions ANY named brand / app / tool / software with a
-    documented logo → "brand_product" wins. Showing the official logo
-    in its real brand colors is the most readable possible thumbnail.
-  - If no named brand but a clear topic with visual artifacts (UI, code,
-    food, charts) → "theme_artifact".
-  - "person" is reserved for genuinely human topics with no brand and
-    no visual artifact. Niche default.
+  - If the reel teaches a TECHNIQUE, EFFECT, TRANSFORMATION, OUTCOME or
+    COMPARISON → "theme_artifact" wins, even when a brand is mentioned
+    (the brand becomes a small credit/tag in the corner, not the hero).
+  - If the reel is ABOUT the brand itself (review, identity, launch,
+    brand-on-brand showdown) → "brand_product".
+  - When unsure between brand_product and theme_artifact: ask "could
+    this thumbnail communicate the value WITHOUT the logo?" If yes →
+    theme_artifact. If no → brand_product.
+  - "person" is reserved for genuinely human topics (mindset, advice,
+    relationships, biography) with no transformation / artifact / brand
+    identity at the core.
   =====================================================================
 
 - brand_queries: List of search queries (one per brand) that the pipeline
@@ -243,6 +278,14 @@ Return a JSON object with:
   * READABILITY TEST — a viewer scrolling Instagram for 0.5 seconds must
     INSTANTLY identify what the hero is. If your scene needs explanation,
     it fails. Pick obvious over clever.
+  * CREATIVITY / NO TEMPLATES — never default to one go-to composition.
+    Each reel deserves a scene custom-fit to its specific VALUE. If you
+    notice yourself reaching for "kraft cardboard box with logo on
+    front" or "single mug on a dark desk" yet again, STOP. Re-read
+    the reel's value statement (the headline) and pick a different
+    composition that better illustrates THAT specific message —
+    transformation split, comparison, magnifier reveal, hand-in-action,
+    grid, before-arrow-after, etc. Variety is mandatory.
 
   ============================================================
   IF subject_focus == "brand_product":
@@ -364,9 +407,11 @@ Return a JSON object with:
   ============================================================
   IF subject_focus == "theme_artifact":
   ============================================================
-  Hero the VISUAL OUTPUT / TOOL of the topic itself. NO person in frame.
-  The artifact must instantly communicate the subject matter — viewer
-  reads the topic from the object alone in <1s.
+  Hero the VISUAL CONCEPT of the reel — the transformation, the
+  comparison, the technique, the outcome, or the artifact itself.
+  Pick a SCENE PATTERN (see STEP 2 a-j) that best matches the value
+  the reel teaches. Vary the pattern across generations — do NOT
+  always default to pattern (j) "artifact hero".
 
   STRUCTURE:
   * MAIN subject: the topic's tangible artifact, rendered as a real
@@ -397,36 +442,68 @@ Return a JSON object with:
     brush over a palette — but no full body or face).
   * Style: premium editorial product / design photography, hyperrealistic.
 
-  Good "theme_artifact" examples:
-  - UI DESIGN: "Three pristine smartphone-sized mockup screens float
-    overlapping in a dark studio, displaying clean modern app UI layouts
-    with abstract colored shapes, cards, and buttons (no readable text,
-    just shapes). The screens have crisp white/colored interface
-    elements on dark UI. Cool daylight key from upper left, deep shadows
-    on the right, dark backdrop. Premium editorial design photography,
-    hyperrealistic, cinematic, shallow depth of field."
-  - CODE: "An ultra-close macro shot of a laptop screen filled with
-    abstract colored syntax-highlighted code blocks (no readable
-    letters — just the visual texture of indented colored shapes
-    suggesting code). Dark IDE background. Single cool key light raking
-    across the screen, deep shadows around. Minimal, premium editorial
-    tech photography, hyperrealistic."
-  - FINANCE: "A printed candlestick stock chart on cream paper lies on
-    a dark wooden desk, the chart trending upward. A vintage fountain
-    pen rests beside it. Hard warm key light from upper left, deep
-    shadow on the right side. Dark moody palette, the green/red
-    candlesticks as the only color pop. Editorial financial photography,
-    hyperrealistic."
-  - COOKING: "A perfectly plated minimalist dish — seared scallops with
-    micro herbs and a citrus reduction — centered on a matte black
-    ceramic plate against a deep black backdrop. Dramatic overhead key
-    light, deep shadows. Earthy palette with the bright citrus as the
-    only color pop. Premium food editorial photography, hyperrealistic."
-  - ARCHITECTURE: "A detailed white architectural scale model of a
-    modern house sits on a polished dark concrete surface in a darkened
-    studio. Cool daylight from the upper left, long sharp shadows on
-    the right. Minimalist, no other objects. Premium editorial
-    architecture photography, hyperrealistic."
+  Good "theme_artifact" examples — note how each picks the pattern
+  that best fits the reel's value, not always "artifact hero":
+
+  - UPSCALE RESOLUTION (a, before/after vertical split): "Vertical
+    split composition filling the frame: the LEFT half shows a
+    blurry low-resolution pixelated portrait photograph, the RIGHT
+    half shows the EXACT same portrait crisp, sharp, fully detailed
+    at high resolution. Clean thin vertical seam between the halves.
+    Dark studio backdrop wrapping both sides. Hard cool key light.
+    Hyperrealistic editorial photography, premium retouching demo."
+
+  - PHOTOSHOP AI FILL (a, before/after): "Vertical split filling the
+    frame: LEFT half a real photo with an awkward gap / missing
+    section, RIGHT half the same photo with the gap seamlessly filled
+    in. Thin seam. Dark studio. Cool daylight key. Editorial photo
+    retouching reference, hyperrealistic."
+
+  - CAMERA COMPARISON Sony vs Canon (e, side-by-side): "Two camera
+    bodies framed tight side by side filling the image, a Sony Alpha
+    on the left and a Canon EOS on the right, each occupying half
+    the frame, hero close-up of their fronts. Dark slate surface,
+    near-black backdrop. Hard cool daylight key from upper left, deep
+    shadows. Hyperrealistic editorial product photography."
+
+  - BEST 7 AI APPS (f, grid): "Seven smartphone mockups arranged in
+    a clean 2-2-2-1 grid filling the frame, each phone showing a
+    different abstract colorful app UI (no readable text, just
+    shapes). Dark backdrop, soft overhead daylight, light pastel app
+    UIs as color pops. Hyperrealistic editorial product photography,
+    premium tech catalog feel."
+
+  - UPSCALE WITH MAGNIFIER (g, macro reveal): "A handheld magnifying
+    glass held in the upper-middle of the frame over a printed
+    pixelated image; THROUGH the magnifying lens the image is
+    sharpened to crystal clear detail. Dark wooden desk. Hard warm
+    key from upper left, deep shadows. Hyperrealistic editorial
+    photography, technical reveal style."
+
+  - CODE TUTORIAL (j, artifact hero): "Ultra-close macro of a laptop
+    screen filled with abstract colored syntax-highlighted code blocks
+    (no readable letters, just indented colored shapes). Dark IDE
+    background. Cool key light raking across, deep shadows.
+    Hyperrealistic editorial tech photography."
+
+  - STOCK CHART TIP (j, artifact hero with brand label): "A printed
+    candlestick chart on cream paper lies on a dark wooden desk, the
+    chart trending upward, the provided TradingView logo small in the
+    bottom corner of the print. Vintage fountain pen rests beside it.
+    Hard warm key from upper left, deep shadow on right. Editorial
+    financial photography, hyperrealistic, brand mark as credit only."
+
+  - MAKEOVER (a, before/after): "Vertical split: LEFT half a cluttered
+    messy desk, RIGHT half the same desk perfectly organized,
+    minimalist. Thin seam. Dark studio. Hard warm key. Hyperrealistic
+    editorial lifestyle photography."
+
+  - HAND TECHNIQUE (h, hand in action): "A single hand holding a
+    professional retouching stylus, gliding across a tablet screen
+    that shows a portrait with a clean transformation visible at the
+    tip of the stylus (blurry behind the stylus, sharp ahead of it).
+    Dark studio backdrop. Hard cool key. Hyperrealistic editorial,
+    technique-in-progress shot."
 
   ============================================================
   IF subject_focus == "person":
@@ -492,7 +569,10 @@ Return a JSON object with:
   - "...sits in a brightly lit modern office with several monitors and plants" (cluttered)
   - "A muscular primal caveman dominates over..." (theatrical)
   - For Google reel (famous brand): "A man in a suit holds a black folder" (wrong archetype — should hero the Google G logo)
-  - For any reel naming a recognizable software/app/brand (Adobe, Blender, Autodesk, Maya, Claude, Cursor, Figma, etc.): falling back to person + laptop or to abstract theme_artifact is WRONG — these all have official logos and brand colors that should be heroed via brand_product. Always prefer showing the actual logo in vivid official colors over a generic person scene or abstract artifact.
+  - For an "upscale image resolution with Freepik" reel: "Hero close-up of a cardboard box with the Freepik logo printed on its front" — WRONG. The VALUE is the upscale transformation, not Freepik's identity. Use theme_artifact pattern (a) before/after split showing the blurry→sharp transformation. Freepik logo, if shown, is a small credit corner.
+  - For an Adobe Photoshop AI fill reel: "3D Adobe logo on pedestal" — WRONG. The value is the fill effect. Use theme_artifact before/after split. Adobe logo as small credit only.
+  - For a Sony vs Canon reel: "Sony logo hero close-up alone" — WRONG. Use side-by-side comparison with BOTH cameras / logos.
+  - Defaulting to "cardboard box with logo on front" / "single ceramic mug with logo" repeatedly for different reels — WRONG. Each reel deserves its own composition based on its specific value. Rotate scene patterns aggressively.
   - For UI design reel: "A man at a laptop in a dark room" (wrong archetype — generic person scene loses the topic; should hero phone mockups / wireframes via theme_artifact)
   - For code reel: "A developer staring at a screen" (generic — should hero the code itself via theme_artifact)
   - For cooking reel: "A chef holding a knife" (lazy — should hero the plated dish or the ingredients via theme_artifact)
