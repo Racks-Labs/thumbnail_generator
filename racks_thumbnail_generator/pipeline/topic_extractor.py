@@ -362,47 +362,15 @@ Return a JSON object with:
   * Color palette: dominated by the BRAND'S OWN color identity (Google = full RGB color pop; Claude = warm cream/orange; OpenAI = teal/black; Apple = silver/white). The rest of the frame stays dark/neutral.
   * Style: premium product photography, commercial advertising still, 3D render quality, hyperrealistic.
 
-  Good "brand_product" examples — each is a TIGHT HERO CLOSE-UP where
-  the logo or logo-bearing object dominates the frame (>50% width).
-  Rotate placements creatively, never default to one setup:
-
-  - GOOGLE (box, hero close-up): "Macro hero close-up of a kraft
-    cardboard box filling most of the frame, the provided Google 'G'
-    logo printed huge on its front face. Polystyrene packing peanuts
-    spill around. Out-of-focus office bokeh far behind. Hard key from
-    above-right, deep shadows. Premium commercial product photography,
-    hyperrealistic."
-  - ADOBE (storefront, dominant): "Tight composition of a large glass
-    storefront sign filling most of the frame, the provided Adobe logo
-    glowing prominently across it. Reflections of city lights. Hard
-    streetlamp key from upper left, deep shadows. Cinematic editorial
-    photography, hyperrealistic."
-  - APPLE (laptop hero): "A pristine silver MacBook Pro framed tight
-    so it fills most of the image, the glowing Apple logo on the lid
-    centered and clearly visible. Dark slate desk, near-black studio
-    backdrop. Hard key from upper left, deep shadows on the right.
-    No other objects. Hyperrealistic commercial product photography."
-  - SPOTIFY (mug close-up): "Hero close-up of a single matte black
-    ceramic coffee mug filling 60% of the frame, the provided Spotify
-    logo printed huge in vivid green across its front. Steam rising.
-    Dark out-of-focus desk background. Hard warm key from upper left,
-    deep shadows. Hyperrealistic editorial product photography."
-  - BLENDER (hoodie, hero crop): "Tight macro of folded grey heather
-    hoodie chest area filling the frame, the provided Blender logo
-    embroidered large and centered on the fabric. Hard key from upper
-    left raking across the weave, deep shadows. Hyperrealistic
-    editorial streetwear catalog feel."
-  - SONY (vinyl hero): "Hero close-up of a matte black vinyl record
-    sleeve filling most of the frame, the provided Sony logo printed
-    bold on its cover. Soft warm tungsten light from above, dark
-    out-of-focus shop bokeh far behind. Hyperrealistic editorial."
-  - MULTI-BRAND (Adobe vs Figma): "Two glossy ceramic coffee mugs
-    framed tight side by side, each filling close to half the image.
-    The left mug has the provided Adobe logo printed huge, the right
-    mug has the provided Figma logo printed huge. Dark wooden desk,
-    near-black backdrop. Hard cool daylight key from upper left, deep
-    shadows. Hyperrealistic editorial product photography, comparison
-    still."
+  CRITICAL — DO NOT COPY ANY EXAMPLES LITERALLY:
+  Every reel deserves its OWN composition. The placements listed above
+  (mug, box, hoodie, billboard, etc.) are starting points to break out
+  of templates — pick whichever feels least obvious for THIS particular
+  brand and value, or invent a completely different placement that fits
+  this brand's specific identity better. If you've seen yourself reach
+  for "cardboard box" or "ceramic mug" in your last few outputs,
+  exclude those. Every generation must look freshly imagined for the
+  specific brand at hand. Variety across runs is mandatory.
 
   ============================================================
   IF subject_focus == "theme_artifact":
@@ -442,68 +410,22 @@ Return a JSON object with:
     brush over a palette — but no full body or face).
   * Style: premium editorial product / design photography, hyperrealistic.
 
-  Good "theme_artifact" examples — note how each picks the pattern
-  that best fits the reel's value, not always "artifact hero":
+  NO CONCRETE EXAMPLES PROVIDED ON PURPOSE.
 
-  - UPSCALE RESOLUTION (a, before/after vertical split): "Vertical
-    split composition filling the frame: the LEFT half shows a
-    blurry low-resolution pixelated portrait photograph, the RIGHT
-    half shows the EXACT same portrait crisp, sharp, fully detailed
-    at high resolution. Clean thin vertical seam between the halves.
-    Dark studio backdrop wrapping both sides. Hard cool key light.
-    Hyperrealistic editorial photography, premium retouching demo."
+  Reason: every time examples are listed, they become anchors and the
+  same composition gets repeated across unrelated reels. The
+  scene-pattern menu in STEP 2 (a-j) is the ONLY anchoring you get.
+  Pick the pattern that fits the reel's specific value, then INVENT
+  a concrete composition fresh for THIS reel — drawing on:
+    - the specific topic / value of the reel
+    - the brand colors and identity (if any logos provided)
+    - real-world settings appropriate to the topic's domain
+    - the chosen scene pattern's structural logic
 
-  - PHOTOSHOP AI FILL (a, before/after): "Vertical split filling the
-    frame: LEFT half a real photo with an awkward gap / missing
-    section, RIGHT half the same photo with the gap seamlessly filled
-    in. Thin seam. Dark studio. Cool daylight key. Editorial photo
-    retouching reference, hyperrealistic."
-
-  - CAMERA COMPARISON Sony vs Canon (e, side-by-side): "Two camera
-    bodies framed tight side by side filling the image, a Sony Alpha
-    on the left and a Canon EOS on the right, each occupying half
-    the frame, hero close-up of their fronts. Dark slate surface,
-    near-black backdrop. Hard cool daylight key from upper left, deep
-    shadows. Hyperrealistic editorial product photography."
-
-  - BEST 7 AI APPS (f, grid): "Seven smartphone mockups arranged in
-    a clean 2-2-2-1 grid filling the frame, each phone showing a
-    different abstract colorful app UI (no readable text, just
-    shapes). Dark backdrop, soft overhead daylight, light pastel app
-    UIs as color pops. Hyperrealistic editorial product photography,
-    premium tech catalog feel."
-
-  - UPSCALE WITH MAGNIFIER (g, macro reveal): "A handheld magnifying
-    glass held in the upper-middle of the frame over a printed
-    pixelated image; THROUGH the magnifying lens the image is
-    sharpened to crystal clear detail. Dark wooden desk. Hard warm
-    key from upper left, deep shadows. Hyperrealistic editorial
-    photography, technical reveal style."
-
-  - CODE TUTORIAL (j, artifact hero): "Ultra-close macro of a laptop
-    screen filled with abstract colored syntax-highlighted code blocks
-    (no readable letters, just indented colored shapes). Dark IDE
-    background. Cool key light raking across, deep shadows.
-    Hyperrealistic editorial tech photography."
-
-  - STOCK CHART TIP (j, artifact hero with brand label): "A printed
-    candlestick chart on cream paper lies on a dark wooden desk, the
-    chart trending upward, the provided TradingView logo small in the
-    bottom corner of the print. Vintage fountain pen rests beside it.
-    Hard warm key from upper left, deep shadow on right. Editorial
-    financial photography, hyperrealistic, brand mark as credit only."
-
-  - MAKEOVER (a, before/after): "Vertical split: LEFT half a cluttered
-    messy desk, RIGHT half the same desk perfectly organized,
-    minimalist. Thin seam. Dark studio. Hard warm key. Hyperrealistic
-    editorial lifestyle photography."
-
-  - HAND TECHNIQUE (h, hand in action): "A single hand holding a
-    professional retouching stylus, gliding across a tablet screen
-    that shows a portrait with a clean transformation visible at the
-    tip of the stylus (blurry behind the stylus, sharp ahead of it).
-    Dark studio backdrop. Hard cool key. Hyperrealistic editorial,
-    technique-in-progress shot."
+  Required diversity check: do NOT use the same scene formula across
+  consecutive reels. If the previous reel was a vertical before/after
+  split, this one should NOT be a vertical before/after split unless
+  the topic is genuinely identical. Pick a different pattern.
 
   ============================================================
   IF subject_focus == "person":
@@ -595,13 +517,36 @@ def _sanitize_headline(text: str) -> str:
 
 
 def extract_topic(transcript: str, api_key: str) -> ThumbnailContent:
+    """Extract thumbnail content from transcript.
+
+    High temperature + per-call random anchor to fight pattern collapse:
+    Gemini at default temperature locks onto the same composition formula
+    across calls (e.g. always 'cardboard box with logo'). We push
+    temperature high and inject a random seed phrase so each call gets
+    distinct sampling.
+    """
+    import random
+    seed = random.randint(1_000_000, 99_999_999)
+
+    diversity_anchor = (
+        f"\n\n=== GENERATION SEED #{seed} ===\n"
+        f"Variation directive for this specific call: deliberately diverge from\n"
+        f"the most obvious / first-thought composition. If your initial concept\n"
+        f"would be 'logo on a cardboard box' or 'vertical before/after split' or\n"
+        f"'hero close-up of a single object', force yourself to consider a\n"
+        f"different scene pattern from STEP 2 (a-j) that ALSO fits this reel.\n"
+        f"Use the seed number above as a creative jolt to break out of templates.\n"
+    )
+
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=EXTRACTION_PROMPT.format(transcript=transcript),
+        contents=EXTRACTION_PROMPT.format(transcript=transcript) + diversity_anchor,
         config=genai_types.GenerateContentConfig(
             response_mime_type="application/json",
             response_schema=ThumbnailContent,
+            temperature=1.5,
+            top_p=0.95,
         ),
     )
     content = ThumbnailContent.model_validate_json(response.text)
