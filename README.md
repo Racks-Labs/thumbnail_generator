@@ -101,6 +101,10 @@ Soporta `zsh`, `bash`, `fish`. Detecta tu shell por `$SHELL` automáticamente. O
 # Básico — usa config global
 racks-thumbnail generate video.mp4
 
+# Si ya tienes el script (texto del reel) — salta audio + transcripción
+racks-thumbnail generate-from-script script.txt
+echo "Texto del reel..." | racks-thumbnail generate-from-script -    # stdin
+
 # Output dir custom (default: ./output del cwd actual)
 racks-thumbnail generate video.mp4 --output ~/Desktop/thumbs
 

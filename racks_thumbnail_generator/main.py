@@ -27,13 +27,15 @@ from racks_thumbnail_generator.generator.image_gen import generate_thumbnail, DE
 from racks_thumbnail_generator.compositor.text_overlay import overlay_text
 
 APP_HELP = """\
-Generate cinematic thumbnails for Racks reels from a video file.
+Generate cinematic thumbnails for Racks reels from a video file or script.
 
 Pipeline: video → audio → transcription → topic → AI scene (Nanobanana) → text overlay (Pillow + Inter + brand color).
+Or, skip the first two steps: script → topic → AI scene → text overlay.
 
 [bold]Quick start[/bold]
   [cyan]racks-thumbnail config set google-api-key TU_KEY[/cyan]    First-time setup
-  [cyan]racks-thumbnail generate video.mp4[/cyan]                  Generate thumbnail (output → ./output/)
+  [cyan]racks-thumbnail generate video.mp4[/cyan]                  Generate from video (full pipeline)
+  [cyan]racks-thumbnail generate-from-script script.txt[/cyan]     Skip transcription, use existing script
   [cyan]racks-thumbnail generate video.mp4 --accent-color "#FF6B00"[/cyan]   Custom color
   [cyan]racks-thumbnail test-transcribe audio.mp3[/cyan]           Test transcription only
   [cyan]racks-thumbnail config show[/cyan]                         View saved config
@@ -91,52 +93,28 @@ def _ensure_api_key(settings) -> None:
     console.print("[green]Saved.[/green]\n")
 
 
-@app.command()
-def generate(
-    video: Path = typer.Argument(..., help="Path to video file (.mp4)"),
-    template: str = typer.Option("default", help="Template name from templates/"),
-    output: Path = typer.Option(None, help="Output directory"),
-    accent_color: str = typer.Option(None, help="Accent color hex (default: #BE190F)"),
-    transcriber: str = typer.Option(None, help="Transcription backend: gemini or whisper"),
-    model: str = typer.Option(DEFAULT_MODEL, help="Gemini image model"),
-    show_prompt: bool = typer.Option(False, "--show-prompt", help="Print the final Nano Banana prompt and exit (no image generated)"),
-):
-    settings = get_settings()
-    _ensure_api_key(settings)
-
-    if accent_color:
-        settings.accent_color = accent_color
-    if transcriber:
-        settings.transcriber = TranscriberBackend(transcriber)
-    if output:
-        settings.output_dir = output
-        settings.output_dir.mkdir(parents=True, exist_ok=True)
-
-    if not video.exists():
-        console.print(f"[red]Video not found: {video}[/red]")
-        raise typer.Exit(1)
-
+def _resolve_template_path(settings, template: str) -> Path:
     template_path = settings.templates_dir / f"{template}.yaml"
     if not template_path.exists():
         console.print(f"[red]Template not found: {template_path}[/red]")
         raise typer.Exit(1)
+    return template_path
 
-    # Step 1: Extract audio
-    console.print("[bold]1/4[/bold] Extracting audio...")
-    audio_path = extract_audio(video)
 
-    # Step 2: Transcribe
-    console.print(f"[bold]2/4[/bold] Transcribing with {settings.transcriber.value}...")
-    transcriber_impl = get_transcriber(
-        backend=settings.transcriber.value,
-        google_api_key=settings.google_api_key,
-        openai_api_key=settings.openai_api_key,
-    )
-    transcript = transcriber_impl.transcribe(audio_path)
-    console.print(Panel(transcript[:300] + ("..." if len(transcript) > 300 else ""), title="Transcripción"))
+def _run_thumbnail_from_transcript(
+    transcript: str,
+    settings,
+    template_path: Path,
+    model: str,
+    show_prompt: bool,
+    step_offset: int = 0,
+    total_steps: int = 2,
+) -> None:
+    """Steps after transcription: topic extraction → logos → image gen → text overlay."""
+    topic_step = 1 + step_offset
+    fetch_step = 2 + step_offset
 
-    # Step 3: Extract topic + visual concept
-    console.print("[bold]3/4[/bold] Extracting topic + visual concept...")
+    console.print(f"[bold]{topic_step}/{total_steps}[/bold] Extracting topic + visual concept...")
     content = extract_topic(transcript, settings.google_api_key)
     from racks_thumbnail_generator.compositor.text_overlay import _resolve_accent_indices
     headline_words = content.headline.split()
@@ -153,18 +131,16 @@ def generate(
     console.print(f"  Scene focus: [bold cyan]{content.subject_focus}[/bold cyan]")
     console.print(Panel(content.concepto_visual, title="Concepto visual"))
 
-    # Step 4a: Fetch brand logos (if any) for use as reference images
     references = []
     if content.brand_queries:
-        console.print(f"[bold]4/4[/bold] Fetching {len(content.brand_queries)} brand logo(s)...")
+        console.print(f"[bold]{fetch_step}/{total_steps}[/bold] Fetching {len(content.brand_queries)} brand logo(s)...")
         logo_dir = settings.output_dir / "_logos"
         references = fetch_brand_logos(content.brand_queries, logo_dir)
         for q in content.brand_queries:
-            matched = any(_safe_logo_name(q) in r.name for r in references)
-            status = "[green]✓[/green]" if matched else "[yellow]✗ not found[/yellow]"
+            ok = any(_safe_logo_name(q) in r.name for r in references)
+            status = "[green]✓[/green]" if ok else "[yellow]✗ not found[/yellow]"
             console.print(f"  {status} {q}")
 
-    # Also pick up any user-provided refs in cwd/references/
     user_refs = Path.cwd() / "references"
     if user_refs.exists():
         references += [
@@ -172,7 +148,6 @@ def generate(
             if r.suffix.lower() in (".png", ".jpg", ".jpeg")
         ]
 
-    # Step 4b: Generate background scene with Nanobanana
     prompt = build_prompt(template_path, content, settings.accent_color)
 
     if show_prompt:
@@ -180,7 +155,6 @@ def generate(
         if references:
             console.print(f"[dim]Reference images that would be passed: {[str(r) for r in references]}[/dim]")
         console.print("[yellow]--show-prompt: skipping image generation.[/yellow]")
-        audio_path.unlink(missing_ok=True)
         return
 
     console.print("Generating background scene with Nanobanana...")
@@ -196,7 +170,6 @@ def generate(
         output_path=background_path,
     )
 
-    # Step 4b: Composite text overlay with Pillow (exact font + exact color)
     console.print("  Compositing text overlay (Inter + exact accent color)...")
     final = overlay_text(
         image=background,
@@ -213,7 +186,106 @@ def generate(
     console.print(f"\n[bold green]Thumbnail saved → {output_path}[/bold green]")
     console.print(f"  Size: {final.size[0]}x{final.size[1]}")
 
-    audio_path.unlink(missing_ok=True)
+
+@app.command()
+def generate(
+    video: Path = typer.Argument(..., help="Path to video file (.mp4)"),
+    template: str = typer.Option("default", help="Template name from templates/"),
+    output: Path = typer.Option(None, help="Output directory"),
+    accent_color: str = typer.Option(None, help="Accent color hex (default: #BE190F)"),
+    transcriber: str = typer.Option(None, help="Transcription backend: gemini or whisper"),
+    model: str = typer.Option(DEFAULT_MODEL, help="Gemini image model"),
+    show_prompt: bool = typer.Option(False, "--show-prompt", help="Print the final Nano Banana prompt and exit (no image generated)"),
+):
+    """Full pipeline: video → audio → transcription → thumbnail."""
+    settings = get_settings()
+    _ensure_api_key(settings)
+
+    if accent_color:
+        settings.accent_color = accent_color
+    if transcriber:
+        settings.transcriber = TranscriberBackend(transcriber)
+    if output:
+        settings.output_dir = output
+        settings.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if not video.exists():
+        console.print(f"[red]Video not found: {video}[/red]")
+        raise typer.Exit(1)
+
+    template_path = _resolve_template_path(settings, template)
+
+    console.print("[bold]1/4[/bold] Extracting audio...")
+    audio_path = extract_audio(video)
+
+    console.print(f"[bold]2/4[/bold] Transcribing with {settings.transcriber.value}...")
+    transcriber_impl = get_transcriber(
+        backend=settings.transcriber.value,
+        google_api_key=settings.google_api_key,
+        openai_api_key=settings.openai_api_key,
+    )
+    transcript = transcriber_impl.transcribe(audio_path)
+    console.print(Panel(transcript[:300] + ("..." if len(transcript) > 300 else ""), title="Transcripción"))
+
+    try:
+        _run_thumbnail_from_transcript(
+            transcript=transcript,
+            settings=settings,
+            template_path=template_path,
+            model=model,
+            show_prompt=show_prompt,
+            step_offset=2,
+            total_steps=4,
+        )
+    finally:
+        audio_path.unlink(missing_ok=True)
+
+
+@app.command(name="generate-from-script")
+def generate_from_script(
+    script: Path = typer.Argument(..., help="Path to script/transcript file (plain text). Use '-' to read from stdin."),
+    template: str = typer.Option("default", help="Template name from templates/"),
+    output: Path = typer.Option(None, help="Output directory"),
+    accent_color: str = typer.Option(None, help="Accent color hex (default: #BE190F)"),
+    model: str = typer.Option(DEFAULT_MODEL, help="Gemini image model"),
+    show_prompt: bool = typer.Option(False, "--show-prompt", help="Print the final Nano Banana prompt and exit (no image generated)"),
+):
+    """Generate from an existing script — skips audio extraction + transcription."""
+    settings = get_settings()
+    _ensure_api_key(settings)
+
+    if accent_color:
+        settings.accent_color = accent_color
+    if output:
+        settings.output_dir = output
+        settings.output_dir.mkdir(parents=True, exist_ok=True)
+
+    if str(script) == "-":
+        transcript = sys.stdin.read()
+    else:
+        if not script.exists():
+            console.print(f"[red]Script not found: {script}[/red]")
+            raise typer.Exit(1)
+        transcript = script.read_text(encoding="utf-8")
+
+    transcript = transcript.strip()
+    if not transcript:
+        console.print("[red]Script is empty.[/red]")
+        raise typer.Exit(1)
+
+    template_path = _resolve_template_path(settings, template)
+
+    console.print(Panel(transcript[:300] + ("..." if len(transcript) > 300 else ""), title="Script"))
+
+    _run_thumbnail_from_transcript(
+        transcript=transcript,
+        settings=settings,
+        template_path=template_path,
+        model=model,
+        show_prompt=show_prompt,
+        step_offset=0,
+        total_steps=2,
+    )
 
 
 @app.command(name="test-transcribe")
