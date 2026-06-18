@@ -41,8 +41,11 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
+# `packages` already ships every file under racks_thumbnail_generator/
+# (assets/, templates/, fonts included) — hatchling bundles non-.py data
+# files in the package dir by default. A force-include re-adding those same
+# paths makes newer hatchling abort the build with a duplicate-file error
+# ("A second file is being added to the wheel archive at the same path:
+# racks_thumbnail_generator/assets/fonts/Inter/Inter-Black.ttf"). So no
+# force-include here.
 packages = ["racks_thumbnail_generator"]
-
-[tool.hatch.build.targets.wheel.force-include]
-"racks_thumbnail_generator/assets" = "racks_thumbnail_generator/assets"
-"racks_thumbnail_generator/templates" = "racks_thumbnail_generator/templates"
