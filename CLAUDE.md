@@ -11,17 +11,26 @@ Automatic thumbnail generator for Racks reels. Pipeline: video → audio → tra
 
 ## Architecture
 - `racks_thumbnail_generator/` — installable package
-  - `pipeline/` — audio, transcription, topic extraction
-  - `generator/` — AI image generation + prompt builder
-  - `compositor/` — Pillow text overlay (post-AI)
+  - `spec.py` — pydantic schema for the JSON config mode. **This is the contract
+    with external frontends** — bump `ThumbnailSpec.version` on breaking changes.
+  - `pipeline/` — audio, transcription, topic extraction, `spec_runner.py`
+    (JSON-config orchestration: AI scene w/ reference images → deterministic overlays)
+  - `generator/` — AI image generation + prompt builder (incl. reference-role block)
+  - `compositor/` — Pillow overlays (post-AI): `text_overlay.py` (legacy
+    `overlay_text` + spec-driven `overlay_title` with per-word underline/highlight),
+    `composer.py` (graphic elements at fixed positions)
   - `templates/default.yaml` — scene + style template
   - `assets/fonts/Inter/` — bundled Inter TTFs
+- `examples/thumbnail_config.json` — working JSON config example (+ placeholder assets)
 - `pyproject.toml` — entry point: `racks-thumbnail = "racks_thumbnail_generator.main:app"`
 
 ## Dev commands
 - `uv run racks-thumbnail generate <video>` — full pipeline
+- `uv run racks-thumbnail generate-from-config <config.json>` — JSON config mode
+- `uv run racks-thumbnail config-schema` — JSON Schema for frontend integration
 - `uv run racks-thumbnail test-transcribe <audio>` — only transcription + topic
 - `uv run racks-thumbnail config show` — view stored config
+- `uv run pytest` — test suite (spec validation, positioning, overlays)
 - `uv build` — build wheel for distribution
 - Bump `pyproject.toml` version on changes (Hatchling caches by version)
 

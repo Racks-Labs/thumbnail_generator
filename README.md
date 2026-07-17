@@ -119,6 +119,65 @@ racks-thumbnail test-transcribe audio.mp3
 
 # Modelo de imagen alternativo
 racks-thumbnail generate video.mp4 --model gemini-3.1-flash-image-preview
+
+# Modo config JSON — imágenes de referencia + overlays fijos + título estilizado
+racks-thumbnail generate-from-config config.json
+racks-thumbnail generate video.mp4 --config config.json   # combinado con transcripción
+```
+
+### Modo config JSON (integración con frontends)
+
+Un JSON define toda la miniatura — pensado para que una app externa lo genere y
+llame a este servicio. Ejemplo completo en [`examples/thumbnail_config.json`](examples/thumbnail_config.json).
+
+```jsonc
+{
+  "version": 1,
+  "canvas": { "width": 1080, "height": 1920 },
+  "generation": {
+    // prompt literal; si es null se construye desde la transcripción (requiere vídeo/script)
+    "prompt": "Cinematic photo... NO TEXT anywhere.",
+    // imágenes que se pasan a la IA como referencia, con su rol descrito en el prompt:
+    // fondo, persona (aportada ya recortada o con fondo simple), producto, etc.
+    "references": [
+      { "path": "assets/background.png", "role": "scene background — use as full-frame backdrop" },
+      { "path": "assets/person.png", "role": "main person, already cut out — place on the right" }
+    ]
+  },
+  // elementos gráficos pegados con Pillow DESPUÉS de generar la imagen:
+  // posición exacta garantizada siempre (fracciones 0-1 del lienzo + anchor)
+  "elements": [
+    { "path": "assets/logo.png", "position": { "x": 0.16, "y": 0.78, "anchor": "bottom_center" }, "width": 0.18 }
+  ],
+  "title": {
+    "text": "Cada vez hay más pobres.",       // null → se extrae de la transcripción
+    "box": { "x": 0.08, "y": 0.24, "width": 0.55, "height": 0.22, "anchor": "top_left", "align": "left" },
+    "font": { "family": "Inter", "weight": "Black" },  // o "file": "mi_fuente.ttf"
+    "size": "auto",                            // o un entero en px
+    "color": "#FFFFFF",
+    "accent": {
+      "style": "underline",                    // underline | highlight | none
+      "words": ["pobres"],                     // palabras a acentuar (sin acento → nada)
+      "color": "#35D0BA", "thickness": 0.09, "offset": 0.1
+    },
+    "shadow": { "enabled": true, "opacity": 0.5 }
+  },
+  "branding": null                             // null quita el texto "RACKS"
+}
+```
+
+Convenciones:
+- **Posiciones**: `x`/`y` en fracciones 0–1 del lienzo (o `"unit": "px"`), y `anchor`
+  indica qué punto del objeto cae en (x, y): `top_left`, `top_center`, `top_right`,
+  `center_left`, `center`, `center_right`, `bottom_left`, `bottom_center`, `bottom_right`.
+- **Rutas** relativas se resuelven respecto al directorio del JSON.
+- La escena se genera **siempre con IA** (las referencias guían a Nanobanana);
+  los `elements` y el título se componen **después, de forma determinista** con Pillow.
+
+El JSON Schema para validar/autocompletar en el frontend:
+
+```bash
+racks-thumbnail config-schema > thumbnail_spec.schema.json
 ```
 
 ### Output
