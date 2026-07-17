@@ -58,3 +58,23 @@ def build_prompt(
         parts.append(f"- {rule}")
 
     return "\n".join(parts)
+
+
+def describe_references(references) -> str:
+    """Prompt block describing each reference image and its role, in the same
+    order the images are attached to the request. `references` is a list of
+    `spec.ReferenceImageSpec`."""
+    if not references:
+        return ""
+    lines = [
+        "=== REFERENCE IMAGES ===",
+        "The images attached before this prompt are references, in this order:",
+    ]
+    for i, ref in enumerate(references, start=1):
+        role = ref.role or "visual reference — use it as provided"
+        lines.append(f"- Image {i}: {role}")
+    lines.append(
+        "Use each reference exactly for its stated role. Keep identities, shapes "
+        "and colors faithful to the references. Do not invent replacements for them."
+    )
+    return "\n".join(lines)

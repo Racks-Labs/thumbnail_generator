@@ -25,6 +25,8 @@ from racks_thumbnail_generator.pipeline.logo_fetch import fetch_brand_logos
 from racks_thumbnail_generator.generator.prompt_builder import build_prompt
 from racks_thumbnail_generator.generator.image_gen import generate_thumbnail, DEFAULT_MODEL
 from racks_thumbnail_generator.compositor.text_overlay import overlay_text
+from racks_thumbnail_generator.pipeline.spec_runner import run_from_spec
+from racks_thumbnail_generator.spec import SpecError, load_spec
 
 APP_HELP = """\
 Generate cinematic thumbnails for Racks reels from a video file or script.
@@ -36,6 +38,8 @@ Or, skip the first two steps: script → topic → AI scene → text overlay.
   [cyan]racks-thumbnail config set google-api-key TU_KEY[/cyan]    First-time setup
   [cyan]racks-thumbnail generate video.mp4[/cyan]                  Generate from video (full pipeline)
   [cyan]racks-thumbnail generate-from-script script.txt[/cyan]     Skip transcription, use existing script
+  [cyan]racks-thumbnail generate-from-config config.json[/cyan]    JSON config: reference images + fixed overlays + styled title
+  [cyan]racks-thumbnail generate video.mp4 --config config.json[/cyan]      Video pipeline + JSON composition
   [cyan]racks-thumbnail generate video.mp4 --accent-color "#FF6B00"[/cyan]   Custom color
   [cyan]racks-thumbnail test-transcribe audio.mp3[/cyan]           Test transcription only
   [cyan]racks-thumbnail config show[/cyan]                         View saved config
@@ -187,6 +191,14 @@ def _run_thumbnail_from_transcript(
     console.print(f"  Size: {final.size[0]}x{final.size[1]}")
 
 
+def _load_spec_or_exit(config: Path):
+    try:
+        return load_spec(config)
+    except SpecError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
 @app.command()
 def generate(
     video: Path = typer.Argument(..., help="Path to video file (.mp4)"),
@@ -195,6 +207,7 @@ def generate(
     accent_color: str = typer.Option(None, help="Accent color hex (default: #BE190F)"),
     transcriber: str = typer.Option(None, help="Transcription backend: gemini or whisper"),
     model: str = typer.Option(DEFAULT_MODEL, help="Gemini image model"),
+    config: Path = typer.Option(None, "--config", help="JSON thumbnail config (reference images + overlays + title style). See examples/thumbnail_config.json"),
     show_prompt: bool = typer.Option(False, "--show-prompt", help="Print the final Nano Banana prompt and exit (no image generated)"),
 ):
     """Full pipeline: video → audio → transcription → thumbnail."""
@@ -213,6 +226,7 @@ def generate(
         console.print(f"[red]Video not found: {video}[/red]")
         raise typer.Exit(1)
 
+    spec = _load_spec_or_exit(config) if config else None
     template_path = _resolve_template_path(settings, template)
 
     console.print("[bold]1/4[/bold] Extracting audio...")
@@ -228,17 +242,87 @@ def generate(
     console.print(Panel(transcript[:300] + ("..." if len(transcript) > 300 else ""), title="Transcripción"))
 
     try:
-        _run_thumbnail_from_transcript(
-            transcript=transcript,
-            settings=settings,
-            template_path=template_path,
-            model=model,
-            show_prompt=show_prompt,
-            step_offset=2,
-            total_steps=4,
-        )
+        if spec:
+            try:
+                run_from_spec(
+                    spec=spec,
+                    settings=settings,
+                    transcript=transcript,
+                    model=model,
+                    show_prompt=show_prompt,
+                )
+            except SpecError as e:
+                console.print(f"[red]{e}[/red]")
+                raise typer.Exit(1)
+        else:
+            _run_thumbnail_from_transcript(
+                transcript=transcript,
+                settings=settings,
+                template_path=template_path,
+                model=model,
+                show_prompt=show_prompt,
+                step_offset=2,
+                total_steps=4,
+            )
     finally:
         audio_path.unlink(missing_ok=True)
+
+
+@app.command(name="generate-from-config")
+def generate_from_config(
+    config: Path = typer.Argument(..., help="JSON thumbnail config. See examples/thumbnail_config.json"),
+    script: Path = typer.Option(None, "--script", help="Script/transcript file ('-' for stdin) — only needed when the config omits title.text or generation.prompt"),
+    output: Path = typer.Option(None, help="Output directory (overrides default; config `output` wins)"),
+    model: str = typer.Option(DEFAULT_MODEL, help="Gemini image model"),
+    show_prompt: bool = typer.Option(False, "--show-prompt", help="Print the final Nano Banana prompt and exit (no image generated)"),
+):
+    """Generate a thumbnail from a JSON config: AI scene from reference images
+    + deterministic overlays (elements at fixed positions + styled title)."""
+    settings = get_settings()
+
+    spec = _load_spec_or_exit(config)
+
+    transcript = None
+    if script is not None:
+        if str(script) == "-":
+            transcript = sys.stdin.read().strip()
+        else:
+            if not script.exists():
+                console.print(f"[red]Script not found: {script}[/red]")
+                raise typer.Exit(1)
+            transcript = script.read_text(encoding="utf-8").strip()
+
+    # API key needed to generate (and for topic extraction); --show-prompt with a
+    # fully specified config works without one.
+    fully_specified = spec.title.text is not None and spec.generation.prompt is not None
+    if not (show_prompt and fully_specified):
+        _ensure_api_key(settings)
+
+    if output:
+        settings.output_dir = output
+        settings.output_dir.mkdir(parents=True, exist_ok=True)
+
+    try:
+        run_from_spec(
+            spec=spec,
+            settings=settings,
+            transcript=transcript,
+            model=model,
+            show_prompt=show_prompt,
+        )
+    except SpecError as e:
+        console.print(f"[red]{e}[/red]")
+        raise typer.Exit(1)
+
+
+@app.command(name="config-schema")
+def config_schema():
+    """Print the JSON Schema of the thumbnail config (for frontend integration)."""
+    import json
+
+    from racks_thumbnail_generator.spec import ThumbnailSpec
+
+    print(json.dumps(ThumbnailSpec.model_json_schema(), indent=2, ensure_ascii=False))
 
 
 @app.command(name="generate-from-script")
