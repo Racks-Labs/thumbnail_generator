@@ -3,6 +3,13 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFilter, ImageFont
 
+from racks_thumbnail_generator.spec import (
+    BrandingSpec,
+    Position,
+    TitleSpec,
+    resolve_position,
+)
+
 
 def _normalize(s: str) -> str:
     """Uppercase + strip accents + drop non-alphanumerics. For fuzzy word matching."""
@@ -113,6 +120,7 @@ def _fit_font(
     start_size: int,
     min_size: int,
     draw: ImageDraw.ImageDraw,
+    line_gap_ratio: float = LINE_GAP_RATIO,
 ) -> tuple[ImageFont.FreeTypeFont, list[list[str]], int]:
     """Find largest font size that fits text into max_width x max_height after wrapping."""
     words = text.split()
@@ -120,7 +128,7 @@ def _fit_font(
         font = ImageFont.truetype(str(font_path), size)
         lines = _wrap_words(words, font, max_width, draw)
         line_h = font.getbbox("Ay")[3]
-        gap = int(line_h * LINE_GAP_RATIO)
+        gap = int(line_h * line_gap_ratio)
         total_h = len(lines) * line_h + (len(lines) - 1) * gap
         widths_ok = all(
             (draw.textbbox((0, 0), " ".join(l), font=font)[2]) <= max_width
@@ -281,5 +289,248 @@ def overlay_text(
             draw.text(el["pos"], el["word"], font=font, fill=el["color"] + (255,))
 
     draw.text(brand_pos, branding, font=brand_font, fill=(255, 255, 255, 255))
+
+    return img
+
+
+# ---------------------------------------------------------------------------
+# Spec-driven title overlay (JSON config mode)
+# ---------------------------------------------------------------------------
+
+
+def _resolve_font_path(font_spec, fonts_dir: Path) -> Path:
+    """`font.file` wins; otherwise `<fonts_dir>/<family>-<weight>.ttf`."""
+    if font_spec.file:
+        path = Path(font_spec.file)
+        if not path.exists():
+            raise FileNotFoundError(f"Font file not found: {path}")
+        return path
+    path = fonts_dir / f"{font_spec.family}-{font_spec.weight}.ttf"
+    if not path.exists():
+        available = sorted(p.stem for p in fonts_dir.glob("*.ttf"))
+        raise FileNotFoundError(
+            f"Font not found: {path}. Available in {fonts_dir}: {available}"
+        )
+    return path
+
+
+def _match_accent_indices(words: list[str], accent_words: list[str]) -> set[int]:
+    """Indices of `words` matching any of `accent_words` (accent/case/punct
+    insensitive, with substring fallback per listed word). Unlike
+    `_resolve_accent_indices`, an explicit list that matches nothing highlights
+    nothing — no longest-word fallback."""
+    norm_words = [_normalize(w) for w in words]
+    matched: set[int] = set()
+    for accent in accent_words:
+        norm_accent = _normalize(accent)
+        if not norm_accent:
+            continue
+        exact = {i for i, w in enumerate(norm_words) if w == norm_accent}
+        if exact:
+            matched |= exact
+            continue
+        matched |= {
+            i for i, w in enumerate(norm_words)
+            if w and (w in norm_accent or norm_accent in w)
+        }
+    return matched
+
+
+def overlay_title(
+    image: Image.Image,
+    title: TitleSpec,
+    fonts_dir: Path,
+    branding: BrandingSpec | None = None,
+) -> Image.Image:
+    """Composite a JSON-spec-driven title (and optional branding) onto image.
+
+    Fully configurable: text box (position/anchor/align), font, size (fixed or
+    auto-fit), color, per-word accent (underline / highlight / none), shadow.
+    """
+    img = image.convert("RGB").copy()
+    W, H = img.size
+    draw = ImageDraw.Draw(img, "RGBA")
+
+    text = (title.text or "").strip()
+    if title.uppercase:
+        text = text.upper()
+
+    elements: list[dict] = []
+    font = None
+
+    if text:
+        # ---- Text box rect (fractions of canvas + anchor) ----
+        box_w = int(title.box.width * W)
+        box_h = int(title.box.height * H)
+        box_x, box_y = resolve_position(
+            Position(x=title.box.x, y=title.box.y, anchor=title.box.anchor),
+            (W, H),
+            (box_w, box_h),
+        )
+
+        font_path = _resolve_font_path(title.font, fonts_dir)
+
+        # ---- Font: fixed size or auto-fit into the box ----
+        if title.size == "auto":
+            start_size = max(int(box_h * 0.55), title.min_size)
+            font, lines, line_h = _fit_font(
+                text=text,
+                font_path=font_path,
+                max_width=box_w,
+                max_height=box_h,
+                start_size=start_size,
+                min_size=title.min_size,
+                draw=draw,
+                line_gap_ratio=title.line_spacing,
+            )
+        else:
+            font = ImageFont.truetype(str(font_path), int(title.size))
+            lines = _wrap_words(text.split(), font, box_w, draw)
+            line_h = font.getbbox("Ay")[3]
+
+        gap = int(line_h * title.line_spacing)
+        total_h = len(lines) * line_h + (len(lines) - 1) * gap
+
+        # Vertical placement inside the box follows the box anchor's vertical part
+        vert = "center" if title.box.anchor.value == "center" else title.box.anchor.value.split("_", 1)[0]
+        if vert == "top":
+            cursor_y = box_y
+        elif vert == "bottom":
+            cursor_y = box_y + box_h - total_h
+        else:
+            cursor_y = box_y + (box_h - total_h) // 2
+
+        # ---- Accent word matching ----
+        flat_words = [w for line in lines for w in line]
+        accent_indices = (
+            _match_accent_indices(flat_words, title.accent.words)
+            if title.accent.style != "none"
+            else set()
+        )
+
+        accent_rgb = _hex_to_rgb(title.accent.color)
+        text_rgb = _hex_to_rgb(title.color)
+        highlight_text_rgb = (
+            _hex_to_rgb(title.accent.text_color)
+            if title.accent.text_color
+            else _readable_text_color(accent_rgb)
+        )
+        ascent = font.getmetrics()[0]
+        underline_h = max(2, int(font.size * title.accent.thickness))
+        underline_off = int(font.size * title.accent.offset)
+
+        # ---- Layout: per-word positions ----
+        space_w = draw.textbbox((0, 0), " ", font=font)[2]
+        flat_idx = -1
+        for line_words in lines:
+            lbbox = draw.textbbox((0, 0), " ".join(line_words), font=font)
+            line_w = lbbox[2] - lbbox[0]
+            ascent_offset = lbbox[1]
+
+            if title.box.align == "center":
+                cursor_x = box_x + (box_w - line_w) // 2
+            elif title.box.align == "right":
+                cursor_x = box_x + box_w - line_w
+            else:
+                cursor_x = box_x
+
+            for i, word in enumerate(line_words):
+                flat_idx += 1
+                wbbox = draw.textbbox((0, 0), word, font=font)
+                ww = wbbox[2] - wbbox[0]
+                wh = wbbox[3] - wbbox[1]
+                is_accent = flat_idx in accent_indices
+
+                if is_accent and title.accent.style == "highlight":
+                    pad_x = int(font.size * 0.12)
+                    pad_y = int(font.size * 0.08)
+                    rect = (
+                        cursor_x - pad_x,
+                        cursor_y + ascent_offset - pad_y,
+                        cursor_x + ww + pad_x,
+                        cursor_y + ascent_offset + wh + pad_y,
+                    )
+                    elements.append({"kind": "block", "rect": rect, "color": accent_rgb})
+                    elements.append({"kind": "text", "pos": (cursor_x, cursor_y), "word": word, "color": highlight_text_rgb, "shadowed": False})
+                else:
+                    if is_accent and title.accent.style == "underline":
+                        uy = cursor_y + ascent + underline_off
+                        rect = (cursor_x, uy, cursor_x + ww, uy + underline_h)
+                        elements.append({"kind": "block", "rect": rect, "color": accent_rgb})
+                    elements.append({"kind": "text", "pos": (cursor_x, cursor_y), "word": word, "color": text_rgb, "shadowed": True})
+
+                cursor_x += ww
+                if i < len(line_words) - 1:
+                    cursor_x += space_w
+
+            cursor_y += line_h + gap
+
+    # ---- Branding ----
+    brand = None
+    if branding and branding.text.strip():
+        brand_font = ImageFont.truetype(
+            str(_resolve_font_path(branding.font, fonts_dir)),
+            max(int(branding.size * H), 12),
+        )
+        bbbox = draw.textbbox((0, 0), branding.text, font=brand_font)
+        bsize = (bbbox[2] - bbbox[0], bbbox[3] - bbbox[1])
+        brand = {
+            "text": branding.text,
+            "font": brand_font,
+            "pos": resolve_position(branding.position, (W, H), bsize),
+            "color": _hex_to_rgb(branding.color),
+        }
+
+    if not elements and not brand:
+        return img
+
+    # ---- Pass 1: blurred drop shadow ----
+    shadow = title.shadow
+    if shadow.enabled:
+        ref_size = font.size if font else int(H * 0.03)
+        off_x = max(1, int(ref_size * shadow.offset_x))
+        off_y = max(1, int(ref_size * shadow.offset_y))
+        blur_radius = max(1, int(ref_size * shadow.blur))
+        shadow_fill = _hex_to_rgb(shadow.color) + (int(shadow.opacity * 255),)
+
+        shadow_layer = Image.new("RGBA", (W, H), (0, 0, 0, 0))
+        sdraw = ImageDraw.Draw(shadow_layer)
+
+        for el in elements:
+            if el["kind"] == "block":
+                x0, y0, x1, y1 = el["rect"]
+                sdraw.rectangle(
+                    [(x0 + off_x, y0 + off_y), (x1 + off_x, y1 + off_y)],
+                    fill=shadow_fill,
+                )
+            elif el["shadowed"]:
+                sdraw.text(
+                    (el["pos"][0] + off_x, el["pos"][1] + off_y),
+                    el["word"],
+                    font=font,
+                    fill=shadow_fill,
+                )
+
+        if brand:
+            sdraw.text(
+                (brand["pos"][0] + max(1, off_x // 2), brand["pos"][1] + max(1, off_y // 2)),
+                brand["text"],
+                font=brand["font"],
+                fill=shadow_fill,
+            )
+
+        shadow_layer = shadow_layer.filter(ImageFilter.GaussianBlur(radius=blur_radius))
+        img.paste(shadow_layer, (0, 0), shadow_layer)
+
+    # ---- Pass 2: content ----
+    for el in elements:
+        if el["kind"] == "block":
+            x0, y0, x1, y1 = el["rect"]
+            draw.rectangle([(x0, y0), (x1, y1)], fill=el["color"] + (255,))
+        else:
+            draw.text(el["pos"], el["word"], font=font, fill=el["color"] + (255,))
+
+    if brand:
+        draw.text(brand["pos"], brand["text"], font=brand["font"], fill=brand["color"] + (255,))
 
     return img
