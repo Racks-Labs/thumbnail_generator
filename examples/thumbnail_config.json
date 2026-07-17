@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "canvas": { "width": 1080, "height": 1920 },
+  "generation": {
+    "prompt": "Cinematic editorial photograph for an Instagram reel cover, vertical 9:16. Recreate the provided background scene and place the provided person standing on the right half of the frame, from the waist up, looking at the camera. Premium magazine quality, soft dramatic lighting, teal color grade. ABSOLUTELY NO TEXT anywhere in the image.",
+    "references": [
+      { "path": "assets/background.png", "role": "scene background — use it as the full-frame backdrop, keep its colors and mood" },
+      { "path": "assets/person.png", "role": "main person, already cut out / on a simple background — integrate them on the right side of the frame, keep their face and clothing exactly as shown" }
+    ]
+  },
+  "elements": [
+    {
+      "path": "assets/logo.png",
+      "position": { "x": 0.16, "y": 0.78, "anchor": "bottom_center" },
+      "width": 0.18,
+      "opacity": 1.0
+    }
+  ],
+  "title": {
+    "text": "Cada vez hay más pobres.",
+    "uppercase": true,
+    "box": { "x": 0.08, "y": 0.24, "width": 0.55, "height": 0.22, "anchor": "top_left", "align": "left" },
+    "font": { "family": "Inter", "weight": "Black" },
+    "size": "auto",
+    "min_size": 40,
+    "color": "#FFFFFF",
+    "line_spacing": 0.04,
+    "accent": {
+      "style": "underline",
+      "words": ["pobres"],
+      "color": "#35D0BA",
+      "thickness": 0.09,
+      "offset": 0.1
+    },
+    "shadow": { "enabled": true, "opacity": 0.5 }
+  },
+  "branding": null
+}
